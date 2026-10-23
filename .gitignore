@@ -1,0 +1,83 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+Thumbs.db
+*.log
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env*
+!.env.example
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# master batch A1 (ditolak, disimpan lokal saja)
+/assets-src/produk-a1/
+
+# ==========================================
+# AI Tools, Prompts & Internal Markdown Docs
+# ==========================================
+.claude/
+.agents/
+.gemini/
+.cursor/
+.cursorrules
+CLAUDE.md
+AGENTS.md
+PROMPT-*.md
+CONTENT-MODEL.md
+DESIGN.md
+
+# Catatan kerja internal: spec, rencana implementasi, postmortem.
+# Berguna di mesin sendiri, tidak untuk dibagikan lewat GitLab.
+/docs/
+
+# ==========================================
+# IDEs & Code Editors
+# ==========================================
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+*.code-workspace
+
+# ==========================================
+# Prisma Client tergenerate
+# ==========================================
+# Dibangun ulang oleh `prisma generate` (dipanggil lewat postinstall).
+# 8 MB berisi WASM — tidak ada gunanya masuk riwayat git.
+/lib/generated/

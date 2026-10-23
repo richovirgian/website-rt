@@ -1,0 +1,171 @@
+// Prisma 7: URL koneksi tidak lagi boleh berada di berkas ini. Ia ada di
+// prisma.config.ts untuk CLI/Migrate, dan diberikan ke PrismaClient lewat
+// driver adapter saat runtime. Lihat lib/db/index.ts.
+//
+// Skema ini dibangun bertahap. Tahap 0 hanya memuat fondasi: autentikasi,
+// pengaturan RT, dan audit log. Model rumah, warga, iuran, tagihan, dan
+// seterusnya ditambahkan pada tahapnya masing-masing. Rancangan lengkapnya ada
+// di docs/erd.md.
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ===========================================================================
+// PENGATURAN
+// ===========================================================================
+
+/// Identitas dan pengaturan satu RT. Selalu tepat satu baris (id = "rt").
+///
+/// Aplikasi ini melayani satu RT, jadi tidak ada kolom organisasi di tabel
+/// lain. Satu baris tetap dipakai, bukan konstanta di kode, supaya Admin bisa
+/// mengubahnya tanpa deploy.
+model PengaturanRt {
+  id               String   @id @default("rt")
+  namaRt           String   @default("RT") @map("nama_rt")
+  alamat           String   @default("")
+  kontak           String   @default("")
+  /// Rekening tujuan transfer manual. Ditampilkan ke warga saat membayar.
+  namaBank         String   @default("") @map("nama_bank")
+  nomorRekening    String   @default("") @map("nomor_rekening")
+  atasNamaRekening String   @default("") @map("atas_nama_rekening")
+  diubahPada       DateTime @updatedAt @map("diubah_pada") @db.Timestamptz(6)
+
+  @@map("pengaturan_rt")
+}
+
+// ===========================================================================
+// AUDIT
+// ===========================================================================
+
+/// Jejak tindakan penting. Hanya ditambah, tidak pernah diubah atau dihapus.
+///
+/// `aktorId` sengaja bukan foreign key: akun bisa dihapus, jejaknya tidak
+/// boleh ikut hilang. Nama dan email aktor disalin saat kejadian supaya log
+/// tetap terbaca setelah akunnya tiada.
+///
+/// `metadata` TIDAK BOLEH memuat sandi, token, atau data pembayaran sensitif.
+model AuditLog {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  aktorId    String?  @map("aktor_id")
+  aktorNama  String   @map("aktor_nama")
+  /// Contoh: "pengguna.buat", "pengaturan.ubah", "auth.masuk".
+  aksi       String
+  entitas    String
+  entitasId  String?  @map("entitas_id")
+  /// "berhasil" atau "ditolak".
+  hasil      String   @default("berhasil")
+  metadata   Json?
+  dibuatPada DateTime @default(now()) @map("dibuat_pada") @db.Timestamptz(6)
+
+  @@index([dibuatPada(sort: Desc)])
+  @@index([aktorId])
+  @@index([entitas, entitasId])
+  @@map("audit_log")
+}
+
+// ===========================================================================
+// AUTENTIKASI (Better Auth)
+//
+// Bentuk tabel di bawah diambil langsung dari getAuthTables() pada versi
+// better-auth yang terpasang, bukan dari dokumentasi: dokumentasi bisa
+// mendahului atau tertinggal dari paketnya, dan selisih satu kolom di sini
+// membuat login gagal dengan cara yang sulit dilacak.
+//
+// `id` sengaja tanpa default basis data. Better Auth membuat sendiri
+// pengenalnya, jadi kolom ini hanya menerima nilai dari sana.
+// ===========================================================================
+
+model User {
+  id            String    @id
+  name          String
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  image         String?
+  /// "admin" | "bendahara" | "warga". Matriks izinnya di lib/izin.ts.
+  role          String?   @default("warga")
+  banned        Boolean?  @default(false)
+  banReason     String?
+  banExpires    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  sessions Session[]
+  accounts Account[]
+
+  @@map("user")
+}
+
+model Session {
+  id             String    @id
+  expiresAt      DateTime
+  token          String    @unique
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime
+  ipAddress      String?
+  userAgent      String?
+  impersonatedBy String?
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  /// Ruang nama identitas. Bersama accountId membentuk kunci unik gabungan.
+  issuer                String
+  accountId             String
+  providerId            String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  /// Hash sandi untuk masuk lewat surel. Bukan sandi mentah.
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([issuer, accountId])
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now())
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+/// Hitungan permintaan per IP per jalur untuk pembatas laju Better Auth.
+///
+/// Bentuk kolomnya ditentukan Better Auth, bukan kita: `key` unik, `count`,
+/// dan `lastRequest` dalam milidetik epoch (bigint). Disimpan di basis data,
+/// bukan di memori proses, supaya menambah replika tidak diam-diam memberi
+/// penyerang jatah baru di tiap proses.
+model RateLimit {
+  id          String @id
+  key         String @unique
+  count       Int
+  lastRequest BigInt
+
+  @@map("rate_limit")
+}
