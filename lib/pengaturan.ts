@@ -11,7 +11,7 @@ export type PengaturanRt = {
 
 export const PENGATURAN_BAWAAN: PengaturanRt = {
   namaRt: "Warga Blok G",
-  alamat: "RT 04 · RW 07",
+  alamat: "RT 04 · RW 02",
   kontak: "",
   namaBank: "",
   nomorRekening: "",
