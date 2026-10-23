@@ -64,7 +64,9 @@ model Rumah {
   dibuatPada DateTime @default(now()) @map("dibuat_pada") @db.Timestamptz(6)
   diubahPada DateTime @updatedAt @map("diubah_pada") @db.Timestamptz(6)
 
-  keluarga Keluarga[]
+  keluarga  Keluarga[]
+  tagihan   Tagihan[]
+  pengaduan Pengaduan[]
 
   @@unique([blok, nomor])
   @@map("rumah")
@@ -114,13 +116,621 @@ model Warga {
   dibuatPada     DateTime         @default(now()) @map("dibuat_pada") @db.Timestamptz(6)
   diubahPada     DateTime         @updatedAt @map("diubah_pada") @db.Timestamptz(6)
 
-  keluarga Keluarga @relation(fields: [keluargaId], references: [id], onDelete: Restrict)
-  user     User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  keluarga       Keluarga         @relation(fields: [keluargaId], references: [id], onDelete: Restrict)
+  user           User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
+  pengajuanSurat PengajuanSurat[]
 
   @@index([keluargaId])
   @@index([namaLengkap])
   @@index([statusDomisili])
   @@map("warga")
+}
+
+// ===========================================================================
+// IURAN DAN TAGIHAN (Tahap 2)
+//
+// Tagihan ditujukan ke RUMAH, bukan ke warga. Satu tagihan lunas sekaligus
+// (tanpa pembayaran sebagian) dan tanpa denda; keduanya bisa ditambahkan
+// belakangan tanpa mengubah tagihan yang sudah terbit.
+//
+// Nominal memakai Decimal, tidak pernah float. Mata uangnya selalu rupiah.
+// ===========================================================================
+
+enum FrekuensiIuran {
+  BULANAN
+  TAHUNAN
+  SEKALI
+}
+
+/// UNPAID -> PAID (diatur modul pembayaran, Tahap 3) atau -> CANCELLED.
+/// "Terlambat" bukan status tersimpan: dihitung dari jatuh tempo dan hari ini,
+/// supaya tidak pernah basi.
+enum StatusTagihan {
+  UNPAID
+  PAID
+  CANCELLED
+}
+
+/// Jenis iuran: keamanan, kebersihan, kegiatan, dan seterusnya. Nominalnya
+/// TIDAK disimpan di sini, tetapi di `AturanIuran` supaya riwayat perubahannya
+/// utuh dan tagihan lama tidak ikut berubah.
+model JenisIuran {
+  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nama           String         @unique
+  deskripsi      String?
+  frekuensi      FrekuensiIuran @default(BULANAN)
+  /// Hanya untuk BULANAN: tanggal jatuh tempo dalam bulan (1 sampai 28).
+  /// Iuran tahunan dan sekali ditentukan saat tagihan diterbitkan.
+  hariJatuhTempo Int            @default(10) @map("hari_jatuh_tempo")
+  /// Bila true, penjadwal menerbitkan tagihan bulanan sendiri. Bawaannya mati:
+  /// menerbitkan tagihan ke seluruh warga harus keputusan yang disengaja.
+  terbitOtomatis Boolean        @default(false) @map("terbit_otomatis")
+  aktif          Boolean        @default(true)
+  dibuatPada     DateTime       @default(now()) @map("dibuat_pada") @db.Timestamptz(6)
+  diubahPada     DateTime       @updatedAt @map("diubah_pada") @db.Timestamptz(6)
+
+  aturan  AturanIuran[]
+  tagihan Tagihan[]
+
+  @@map("jenis_iuran")
+}
+
+/// Riwayat nominal. Nominal yang berlaku pada suatu tanggal adalah baris
+/// dengan `berlakuMulai` terbesar yang tidak melewati tanggal itu.
+model AturanIuran {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  jenisIuranId String   @map("jenis_iuran_id") @db.Uuid
+  nominal      Decimal  @db.Decimal(14, 2)
+  berlakuMulai DateTime @map("berlaku_mulai") @db.Date
+  dibuatOleh   String?  @map("dibuat_oleh")
+  dibuatPada   DateTime @default(now()) @map("dibuat_pada") @db.Timestamptz(6)
+
+  jenisIuran JenisIuran @relation(fields: [jenisIuranId], references: [id], onDelete: Restrict)
+
+  @@unique([jenisIuranId, berlakuMulai])
+  @@map("aturan_iuran")
+}
+
+/// Satu tagihan untuk satu rumah, satu jenis iuran, satu periode.
+///
+/// Unik pada (rumah, jenis, periode): inilah yang membuat penerbitan
+/// idempoten. Penjadwal yang berjalan dua kali, atau dua admin yang menekan
+/// tombol bersamaan, tidak bisa membuat tagihan ganda.
+///
+/// `judul` dan `nominal` disalin saat terbit, jadi mengubah jenis atau
+/// nominal iuran tidak mengubah tagihan yang sudah ada.
+model Tagihan {
+  id               String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  rumahId          String        @map("rumah_id") @db.Uuid
+  jenisIuranId     String        @map("jenis_iuran_id") @db.Uuid
+  /// "2026-11" (bulanan), "2026" (tahunan), atau "SEKALI".
+  periode          String
+  judul            String
+  nominal          Decimal       @db.Decimal(14, 2)
+  jatuhTempo       DateTime      @map("jatuh_tempo") @db.Date
+  status           StatusTagihan @default(UNPAID)
+  diterbitkanOleh  String        @map("diterbitkan_oleh")
+  dibatalkanAlasan String?       @map("dibatalkan_alasan")
+  dibatalkanOleh   String?       @map("dibatalkan_oleh")
+  dibatalkanPada   DateTime?     @map("dibatalkan_pada") @db.Timestamptz(6)
+  dibuatPada       DateTime      @default(now()) @map("dibuat_pada") @db.Timestamptz(6)
+  diubahPada       DateTime      @updatedAt @map("diubah_pada") @db.Timestamptz(6)
+
+  rumah      Rumah        @relation(fields: [rumahId], references: [id], onDelete: Restrict)
+  jenisIuran JenisIuran   @relation(fields: [jenisIuranId], references: [id], onDelete: Restrict)
+  pembayaran Pembayaran[]
+
+  @@unique([rumahId, jenisIuranId, periode])
+  @@index([status, jatuhTempo])
+  @@index([periode])
+  @@index([rumahId])
+  @@map("tagihan")
+}
+
+// ===========================================================================
+// PEMBAYARAN DAN KAS (Tahap 3)
+//
+// Satu pembayaran melunasi satu tagihan sepenuhnya. Pembayaran terverifikasi
+// menghasilkan TEPAT SATU transaksi kas masuk dan satu kuitansi, ketiganya
+// ditulis dalam satu transaksi database. Saldo kas tidak disimpan: selalu
+// dihitung dari transaksi (masuk dikurangi keluar), sehingga tidak bisa
+// menyimpang dari sumbernya.
+//
+// Transaksi kas yang sudah tercatat TIDAK pernah diubah atau dihapus.
+// Koreksi dilakukan dengan transaksi pembalik yang menunjuk transaksi asal.
+// ===========================================================================
+
+enum MetodePembayaran {
+  TUNAI
+  TRANSFER
+}
+
+/// PENDING (transfer menunggu bendahara) -> VERIFIED atau REJECTED.
+/// VERIFIED -> VOIDED bila kemudian dibatalkan (dengan transaksi pembalik).
+enum StatusPembayaran {
+  PENDING
+  VERIFIED
+  REJECTED
+  VOIDED
+}
+
+enum JenisKas {
+  MASUK
+  KELUAR
+}
+
+model Pembayaran {
+  id               String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tagihanId        String           @map("tagihan_id") @db.Uuid
+  metode           MetodePembayaran
+  status           StatusPembayaran
+  nominal          Decimal          @db.Decimal(14, 2)
+  tanggalBayar     DateTime         @map("tanggal_bayar") @db.Date
+  /// Nama orang yang membayar (untuk tunai, diisi bendahara).
+  dibayarOleh      String?          @map("dibayar_oleh")
+  /// Akun yang mengajukan transfer. Bukan foreign key: jejaknya harus
+  /// bertahan walau akunnya dihapus.
+  diajukanOlehId   String?          @map("diajukan_oleh_id")
+  catatan          String?
+  alasanTolak      String?          @map("alasan_tolak")
+  diverifikasiOleh String?          @map("diverifikasi_oleh")
+  diverifikasiPada DateTime?        @map("diverifikasi_pada") @db.Timestamptz(6)
+  dibatalkanAlasan String?          @map("dibatalkan_alasan")
+  dibatalkanOleh   String?          @map("dibatalkan_oleh")
+  dibatalkanPada   DateTime?        @map("dibatalkan_pada") @db.Timestamptz(6)
+  dibuatPada       DateTime         @default(now()) @map("dibuat_pada") @db.Timestamptz(6)
+  diubahPada       DateTime         @updatedAt @map("diubah_pada") @db.Timestamptz(6)
+
+  tagihan   Tagihan          @relation(fields: [tagihanId], references: [id], onDelete: Restrict)
+  bukti     BuktiPembayaran?
+  kuitansi  Kuitansi?
+  transaksi TransaksiKas?
+
+  @@index([tagihanId, status])
+  @@index([status, dibuatPada])
+  @@map("pembayaran")
+}
+
+/// Berkas bukti transfer. Disimpan di database (maksimal 2 MB) selama belum
+/// ada penyimpanan objek. Hanya dilayani lewat /api/bukti/[id] yang memeriksa
+/// izin; tidak pernah lewat alamat publik.
+model BuktiPembayaran {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  pembayaranId String   @unique @map("pembayaran_id") @db.Uuid
+  namaBerkas   String   @map("nama_berkas")
+  tipe         String
+  ukuran       Int
+  data         Bytes
+  dibuatPada   DateTime @default(now()) @map("dibuat_pada") @db.Timestamptz(6)
+
+  pembayaran Pembayaran @relation(fields: [pembayaranId], references: [id], onDelete: Cascade)
+
+  @@map("bukti_pembayaran")
+}
+
+model Kuitansi {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nomor           String   @unique
+  pembayaranId    String   @unique @map("pembayaran_id") @db.Uuid
+  diterbitkanPada DateTime @default(now()) @map("diterbitkan_pada") @db.Timestamptz(6)
+
+  pembayaran Pembayaran @relation(fields: [pembayaranId], references: [id], onDelete: Restrict)
+
+  @@map("kuitansi")
+}
+
+model KategoriKas {
+  id    String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nama  String
+  jenis JenisKas
+  aktif Boolean  @default(true)
+
+  transaksi TransaksiKas[]
+
+  @@unique([nama, jenis])
+  @@map("kategori_kas")
+}
+
+/// Buku kas. Hanya ditambah. `koreksiDariId` menandai transaksi pembalik dan
+/// unik, sehingga satu transaksi hanya bisa dikoreksi sekali.
+model TransaksiKas {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nomor         String   @unique
+  jenis         JenisKas
+  kategoriId    String   @map("kategori_id") @db.Uuid
+  nominal       Decimal  @db.Decimal(14, 2)
+  tanggal       DateTime @db.Date
+  deskripsi     String
+  /// Terisi untuk kas masuk yang berasal dari pembayaran tagihan. Unik:
+  /// satu pembayaran tidak bisa dicatat sebagai pemasukan dua kali.
+  pembayaranId  String?  @unique @map("pembayaran_id") @db.Uuid
+  koreksiDariId String?  @unique @map("koreksi_dari_id") @db.Uuid
+  dicatatOleh   String   @map("dicatat_oleh")
+  dibuatPada    DateTime @default(now()) @map("dibuat_pada") @db.Timestamptz(6)
+
+  kategori    KategoriKas   @relation(fields: [kategoriId], references: [id], onDelete: Restrict)
+  pembayaran  Pembayaran?   @relation(fields: [pembayaranId], references: [id], onDelete: Restrict)
+  koreksiDari TransaksiKas? @relation("Koreksi", fields: [koreksiDariId], references: [id], onDelete: Restrict)
+  koreksi     TransaksiKas? @relation("Koreksi")
+
+  @@index([tanggal])
+  @@index([jenis, tanggal])
+  @@map("transaksi_kas")
+}
+
+/// Penghitung nomor urut per awalan dan tahun, misalnya "KWT-2026". Dinaikkan
+/// dengan UPDATE satu baris di dalam transaksi, jadi dua penulisan bersamaan
+/// tidak pernah mendapat nomor yang sama.
+model Urutan {
+  kunci String @id
+  nilai Int    @default(0)
+
+  @@map("urutan")
+}
+
+// ===========================================================================
+// SURAT, PENGUMUMAN, PENGADUAN, KEGIATAN, NOTIFIKASI (Tahap 5)
+//
+// Berkas lampiran disimpan di database (maksimal 2 MB per berkas, tiga per
+// pengajuan), sama seperti bukti transfer. Hanya dilayani lewat
+// /api/lampiran/[id] yang memeriksa izin.
+// ===========================================================================
+
+enum StatusSurat {
+  DIAJUKAN
+  REVISI
+  DISETUJUI
+  DITOLAK
+  DIBATALKAN
+}
+
+enum KategoriPengumuman {
+  UMUM
+  PENTING
+  KEGIATAN
+  KEUANGAN
+}
+
+enum StatusPengumuman {
+  DRAFT
+  TERBIT
+}
+
+enum KategoriPengaduan {
+  KEBERSIHAN
+  KEAMANAN
+  FASILITAS
+  SOSIAL
+  LAINNYA
+}
+
+enum StatusPengaduan {
+  BARU
+  DITUGASKAN
+  DIPROSES
+  SELESAI
+  DITUTUP
+}
+
+enum JenisKegiatan {
+  RAPAT
+  KERJA_BAKTI
+  RONDA
+  SOSIAL
+  LAINNYA
+}
+
+enum StatusKegiatan {
+  DIJADWALKAN
+  SELESAI
+  DIBATALKAN
+}
+
+/// Jenis surat beserta templatnya. Placeholder yang dikenal didaftarkan di
+/// lib/surat.ts; templat dengan placeholder tak dikenal ditolak saat disimpan.
+model JenisSurat {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nama       String   @unique
+  /// Awalan nomor surat, misalnya "SPN" menghasilkan SPN-2026-00001.
+  kode       String   @unique
+  deskripsi  String?
+  templat    String
+  aktif      Boolean  @default(true)
+  dibuatPada DateTime @default(now()) @map("dibuat_pada") @db.Timestamptz(6)
+  diubahPada DateTime @updatedAt @map("diubah_pada") @db.Timestamptz(6)
+
+  pengajuan PengajuanSurat[]
+
+  @@map("jenis_surat")
+}
+
+/// Satu pengajuan surat oleh warga. `templatSnapshot` menyalin templat saat
+/// disetujui, jadi mengubah templat tidak mengubah surat yang sudah terbit.
+model PengajuanSurat {
+  id              String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  jenisSuratId    String      @map("jenis_surat_id") @db.Uuid
+  pemohonWargaId  String      @map("pemohon_warga_id") @db.Uuid
+  /// Akun pemohon. Bukan foreign key: jejaknya bertahan walau akun dihapus.
+  pemohonUserId   String      @map("pemohon_user_id")
+  keperluan       String
+  status          StatusSurat @default(DIAJUKAN)
+  nomor           String?     @unique
+  templatSnapshot String?     @map("templat_snapshot")
+  /// Alasan revisi atau penolakan.
+  alasan          String?
+  diputuskanOleh  String?     @map("diputuskan_oleh")
+  diputuskanPada  DateTime?   @map("diputuskan_pada") @db.Timestamptz(6)
+  dibuatPada      DateTime    @default(now()) @map("dibuat_pada") @db.Timestamptz(6)
+  diubahPada      DateTime    @updatedAt @map("diubah_pada") @db.Timestamptz(6)
+
+  jenisSurat JenisSurat @relation(fields: [jenisSuratId], references: [id], onDelete: Restrict)
+  pemohon    Warga      @relation(fields: [pemohonWargaId], references: [id], onDelete: Restrict)
+  lampiran   Lampiran[]
+
+  @@index([status, dibuatPada])
+  @@index([pemohonUserId])
+  @@map("pengajuan_surat")
+}
+
+/// Berkas lampiran untuk surat, pengaduan, atau pengumuman. Tepat satu dari
+/// tiga kolom induk terisi (dijaga di kode, karena Prisma tidak punya CHECK).
+model Lampiran {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  pengajuanSuratId String?  @map("pengajuan_surat_id") @db.Uuid
+  pengaduanId      String?  @map("pengaduan_id") @db.Uuid
+  pengumumanId     String?  @map("pengumuman_id") @db.Uuid
+  namaBerkas       String   @map("nama_berkas")
+  tipe             String
+  ukuran           Int
+  data             Bytes
+  dibuatPada       DateTime @default(now()) @map("dibuat_pada") @db.Timestamptz(6)
+
+  pengajuanSurat PengajuanSurat? @relation(fields: [pengajuanSuratId], references: [id], onDelete: Cascade)
+  pengaduan      Pengaduan?      @relation(fields: [pengaduanId], references: [id], onDelete: Cascade)
+  pengumuman     Pengumuman?     @relation(fields: [pengumumanId], references: [id], onDelete: Cascade)
+
+  @@index([pengajuanSuratId])
+  @@index([pengaduanId])
+  @@index([pengumumanId])
+  @@map("lampiran")
+}
+
+/// Terlihat oleh semua pengguna yang masuk bila status TERBIT dan `terbitPada`
+/// sudah lewat. `terbitPada` di masa depan berarti terjadwal.
+model Pengumuman {
+  id                 String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  judul              String
+  isi                String
+  kategori           KategoriPengumuman @default(UMUM)
+  status             StatusPengumuman   @default(DRAFT)
+  terbitPada         DateTime?          @map("terbit_pada") @db.Timestamptz(6)
+  disematkan         Boolean            @default(false)
+  penulis            String
+  /// Penjadwal menandai ini setelah memberi notifikasi untuk pengumuman terjadwal.
+  notifikasiTerkirim Boolean            @default(false) @map("notifikasi_terkirim")
+  dibuatPada         DateTime           @default(now()) @map("dibuat_pada") @db.Timestamptz(6)
+  diubahPada         DateTime           @updatedAt @map("diubah_pada") @db.Timestamptz(6)
+
+  lampiran Lampiran[]
+  dibaca   PengumumanDibaca[]
+
+  @@index([status, terbitPada])
+  @@map("pengumuman")
+}
+
+model PengumumanDibaca {
+  pengumumanId String   @map("pengumuman_id") @db.Uuid
+  userId       String   @map("user_id")
+  dibacaPada   DateTime @default(now()) @map("dibaca_pada") @db.Timestamptz(6)
+
+  pengumuman Pengumuman @relation(fields: [pengumumanId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([pengumumanId, userId])
+  @@map("pengumuman_dibaca")
+}
+
+/// Hanya pelapor dan Admin yang dapat melihat. Tidak pernah ditampilkan publik.
+model Pengaduan {
+  id              String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nomor           String            @unique
+  pelaporUserId   String            @map("pelapor_user_id")
+  pelaporNama     String            @map("pelapor_nama")
+  rumahId         String?           @map("rumah_id") @db.Uuid
+  kategori        KategoriPengaduan
+  judul           String
+  deskripsi       String
+  lokasi          String?
+  status          StatusPengaduan   @default(BARU)
+  /// Teks bebas: koordinator seksi belum tentu punya akun.
+  penanggungJawab String?           @map("penanggung_jawab")
+  selesaiPada     DateTime?         @map("selesai_pada") @db.Timestamptz(6)
+  dibuatPada      DateTime          @default(now()) @map("dibuat_pada") @db.Timestamptz(6)
+  diubahPada      DateTime          @updatedAt @map("diubah_pada") @db.Timestamptz(6)
+
+  rumah     Rumah?               @relation(fields: [rumahId], references: [id], onDelete: SetNull)
+  pembaruan PembaruanPengaduan[]
+  lampiran  Lampiran[]
+
+  @@index([status, dibuatPada])
+  @@index([pelaporUserId])
+  @@map("pengaduan")
+}
+
+/// Riwayat tindak lanjut. Hanya ditambah, tidak diubah.
+model PembaruanPengaduan {
+  id          String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  pengaduanId String           @map("pengaduan_id") @db.Uuid
+  /// Status baru bila pembaruan ini mengubah status.
+  status      StatusPengaduan?
+  catatan     String
+  oleh        String
+  dariPelapor Boolean          @default(false) @map("dari_pelapor")
+  dibuatPada  DateTime         @default(now()) @map("dibuat_pada") @db.Timestamptz(6)
+
+  pengaduan Pengaduan @relation(fields: [pengaduanId], references: [id], onDelete: Cascade)
+
+  @@index([pengaduanId, dibuatPada])
+  @@map("pembaruan_pengaduan")
+}
+
+model Kegiatan {
+  id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  judul           String
+  deskripsi       String?
+  jenis           JenisKegiatan  @default(LAINNYA)
+  mulai           DateTime       @db.Timestamptz(6)
+  selesai         DateTime?      @db.Timestamptz(6)
+  lokasi          String
+  penanggungJawab String?        @map("penanggung_jawab")
+  status          StatusKegiatan @default(DIJADWALKAN)
+  dibuatOleh      String         @map("dibuat_oleh")
+  dibuatPada      DateTime       @default(now()) @map("dibuat_pada") @db.Timestamptz(6)
+  diubahPada      DateTime       @updatedAt @map("diubah_pada") @db.Timestamptz(6)
+
+  peserta PesertaKegiatan[]
+
+  @@index([mulai])
+  @@map("kegiatan")
+}
+
+/// Konfirmasi kehadiran. `hadir` true berarti ikut, false berarti tidak.
+model PesertaKegiatan {
+  kegiatanId String   @map("kegiatan_id") @db.Uuid
+  userId     String   @map("user_id")
+  hadir      Boolean
+  diubahPada DateTime @updatedAt @map("diubah_pada") @db.Timestamptz(6)
+
+  kegiatan Kegiatan @relation(fields: [kegiatanId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([kegiatanId, userId])
+  @@map("peserta_kegiatan")
+}
+
+/// Notifikasi dalam aplikasi. Unik pada (pengguna, kunci): peristiwa yang
+/// sama tidak pernah memberi dua notifikasi ke orang yang sama, walau
+/// penjadwal atau tombol dijalankan berulang.
+model Notifikasi {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String    @map("user_id")
+  jenis      String
+  judul      String
+  isi        String
+  tautan     String?
+  kunci      String
+  dibacaPada DateTime? @map("dibaca_pada") @db.Timestamptz(6)
+  dibuatPada DateTime  @default(now()) @map("dibuat_pada") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, kunci])
+  @@index([userId, dibacaPada, dibuatPada(sort: Desc)])
+  @@map("notifikasi")
+}
+
+// ===========================================================================
+// KONTEN SITUS PUBLIK (Tahap 5b)
+//
+// Artikel, foto galeri, dan susunan pengurus yang tampil di situs publik.
+// `PengaturanSitus` menandai jenis konten mana yang sudah dikelola dari
+// panel. Selama belum, situs publik memakai isi bawaan dari lib/profil.ts dan
+// lib/artikel.ts, supaya situs tidak pernah tampil kosong.
+// ===========================================================================
+
+enum KategoriArtikelSitus {
+  KEGIATAN
+  KEAMANAN
+  KEUANGAN
+  LINGKUNGAN
+  PENGUMUMAN
+}
+
+enum StatusArtikel {
+  DRAFT
+  TERBIT
+}
+
+enum TingkatPengurus {
+  KETUA
+  INTI
+  SEKSI
+}
+
+/// Gambar situs. Selalu hasil olahan server (diperkecil, dikonversi ke WebP,
+/// metadata dibuang), sehingga ukurannya kecil dan aman dilayani publik.
+model GambarSitus {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tipe       String
+  lebar      Int
+  tinggi     Int
+  ukuran     Int
+  data       Bytes
+  dibuatPada DateTime @default(now()) @map("dibuat_pada") @db.Timestamptz(6)
+
+  foto    FotoGaleri[]
+  artikel ArtikelSitus[]
+
+  @@map("gambar_situs")
+}
+
+model FotoGaleri {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  gambarId   String   @map("gambar_id") @db.Uuid
+  judul      String
+  keterangan String?
+  urutan     Int      @default(0)
+  dibuatPada DateTime @default(now()) @map("dibuat_pada") @db.Timestamptz(6)
+
+  gambar GambarSitus @relation(fields: [gambarId], references: [id], onDelete: Restrict)
+
+  @@index([urutan, dibuatPada])
+  @@map("foto_galeri")
+}
+
+model ArtikelSitus {
+  id         String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug       String               @unique
+  judul      String
+  kategori   KategoriArtikelSitus @default(PENGUMUMAN)
+  ringkas    String
+  /// Paragraf dipisah baris kosong; baris "## Judul" membuka subjudul.
+  isi        String
+  penulis    String
+  tanggal    DateTime             @db.Date
+  status     StatusArtikel        @default(DRAFT)
+  coverId    String?              @map("cover_id") @db.Uuid
+  dibuatPada DateTime             @default(now()) @map("dibuat_pada") @db.Timestamptz(6)
+  diubahPada DateTime             @updatedAt @map("diubah_pada") @db.Timestamptz(6)
+
+  cover GambarSitus? @relation(fields: [coverId], references: [id], onDelete: SetNull)
+
+  @@index([status, tanggal(sort: Desc)])
+  @@map("artikel_situs")
+}
+
+model PengurusSitus {
+  id         String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tingkat    TingkatPengurus
+  jabatan    String
+  nama       String
+  tugas      String
+  urutan     Int             @default(0)
+  diubahPada DateTime        @updatedAt @map("diubah_pada") @db.Timestamptz(6)
+
+  @@index([tingkat, urutan])
+  @@map("pengurus_situs")
+}
+
+/// Satu baris (id = "situs"). Bendera true berarti jenis konten itu sudah
+/// dikelola dari panel dan situs publik memakai database, bukan isi bawaan.
+model PengaturanSitus {
+  id             String  @id @default("situs")
+  artikelDiatur  Boolean @default(false) @map("artikel_diatur")
+  strukturDiatur Boolean @default(false) @map("struktur_diatur")
+  galeriDiatur   Boolean @default(false) @map("galeri_diatur")
+
+  @@map("pengaturan_situs")
 }
 
 // ===========================================================================
@@ -206,14 +816,18 @@ model User {
   accounts Account[]
   warga    Warga?
 
+  pengumumanDibaca PengumumanDibaca[]
+  kegiatanDiikuti  PesertaKegiatan[]
+  notifikasi       Notifikasi[]
+
   @@map("user")
 }
 
 model Session {
-  id             String    @id
+  id             String   @id
   expiresAt      DateTime
-  token          String    @unique
-  createdAt      DateTime  @default(now())
+  token          String   @unique
+  createdAt      DateTime @default(now())
   updatedAt      DateTime
   ipAddress      String?
   userAgent      String?

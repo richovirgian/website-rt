@@ -11,6 +11,19 @@ type Catatan = {
   metadata?: Record<string, string | number | boolean | null>;
 };
 
+/** Bentuk data baris audit, untuk ditulis di dalam `$transaction` yang sama dengan tindakannya. */
+export function dataAudit(c: Catatan) {
+  return {
+    aktorId: c.aktorId,
+    aktorNama: c.aktorNama,
+    aksi: c.aksi,
+    entitas: c.entitas,
+    entitasId: c.entitasId ?? null,
+    hasil: c.hasil ?? "berhasil",
+    metadata: c.metadata ?? undefined,
+  };
+}
+
 /**
  * Menulis satu baris audit log.
  *

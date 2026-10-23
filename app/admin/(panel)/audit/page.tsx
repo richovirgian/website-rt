@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { db } from "@/lib/db";
 import { wajibIzin } from "@/lib/cms/sesi";
+import { DaftarResponsif } from "@/components/cms/daftar-responsif";
 
 export const dynamic = "force-dynamic";
 
@@ -41,44 +42,31 @@ export default async function HalamanAudit({
           Belum ada aktivitas tercatat.
         </p>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-line">
-          <table className="w-full min-w-[40rem] text-left text-sm">
-            <thead className="bg-surface text-xs uppercase tracking-wider text-muted-fg">
-              <tr>
-                <th scope="col" className="px-4 py-3">Waktu</th>
-                <th scope="col" className="px-4 py-3">Pelaku</th>
-                <th scope="col" className="px-4 py-3">Tindakan</th>
-                <th scope="col" className="px-4 py-3">Hasil</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-line">
-              {baris.map((b) => (
-                <tr key={b.id}>
-                  <td className="whitespace-nowrap px-4 py-3 text-muted-fg">
-                    {b.dibuatPada.toLocaleString("id-ID", {
-                      timeZone: "Asia/Jakarta",
-                      dateStyle: "medium",
-                      timeStyle: "short",
-                    })}
-                  </td>
-                  <td className="px-4 py-3 text-hijau-tua">{b.aktorNama}</td>
-                  <td className="px-4 py-3 font-mono text-xs text-hijau-tua">
-                    {b.aksi}
-                  </td>
-                  <td
-                    className={
-                      b.hasil === "berhasil"
-                        ? "px-4 py-3 text-hijau"
-                        : "px-4 py-3 text-red-700"
-                    }
-                  >
-                    {b.hasil}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <DaftarResponsif
+          label="Audit log"
+          baris={baris}
+          kunci={(b) => b.id}
+          kolom={[
+            {
+              judul: "Tindakan",
+              utama: true,
+              sel: (b) => <span className="font-mono text-xs">{b.aksi}</span>,
+            },
+            {
+              judul: "Waktu",
+              sel: (b) => (
+                <span className="whitespace-nowrap">
+                  {b.dibuatPada.toLocaleString("id-ID", { timeZone: "Asia/Jakarta", dateStyle: "medium", timeStyle: "short" })}
+                </span>
+              ),
+            },
+            { judul: "Pelaku", sel: (b) => b.aktorNama },
+            {
+              judul: "Hasil",
+              sel: (b) => <span className={b.hasil === "berhasil" ? "text-hijau" : "text-red-700"}>{b.hasil}</span>,
+            },
+          ]}
+        />
       )}
 
       {jumlahHalaman > 1 && (

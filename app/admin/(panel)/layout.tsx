@@ -6,6 +6,9 @@ import { pengaturanRt } from "@/lib/pengaturan";
 import { Logo } from "@/components/site/logo";
 import { TombolKeluar } from "@/components/cms/tombol-keluar";
 import { NavAdmin } from "@/components/cms/nav-admin";
+import { BilahBawah } from "@/components/cms/bilah-bawah";
+import { LoncengNotifikasi } from "@/components/cms/lonceng-notifikasi";
+import { jumlahNotifikasiBelumDibaca } from "@/lib/komunikasi-kueri";
 
 /**
  * Shell panel, sekaligus penjaga sesi.
@@ -26,26 +29,30 @@ export default async function PanelLayout({
   const peran = peranPengguna(s);
   const badge = INFO_PERAN[peran];
   const rt = await pengaturanRt();
+  const belumDibaca = await jumlahNotifikasiBelumDibaca(s.user.id);
 
   const menu = MENU.filter((m) => m.izin === null || punya(peran, m.izin));
 
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[17rem_1fr]">
-      <aside className="border-b border-line bg-surface lg:sticky lg:top-0 lg:h-dvh lg:border-b-0 lg:border-r">
+      <aside className="border-b border-line bg-surface print:hidden lg:sticky lg:top-0 lg:h-dvh lg:border-b-0 lg:border-r">
         <div className="flex h-full flex-col gap-4 p-4 lg:gap-6 lg:p-5">
           <div className="flex items-center justify-between gap-3">
             <Link href="/admin" className="shrink-0 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-hijau">
               <Logo nama={rt.namaRt} ringkas />
             </Link>
-            <Link
-              href="/"
-              className="text-xs font-semibold text-hijau underline-offset-4 hover:underline lg:hidden"
-            >
-              Lihat situs
-            </Link>
+            <div className="flex items-center gap-1">
+              <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider lg:hidden ${badge.kelas}`}>
+                {badge.nama}
+              </span>
+              <LoncengNotifikasi jumlah={belumDibaca} />
+            </div>
           </div>
 
-          <NavAdmin menu={menu} />
+          {/* Layar lebar: menu samping. Ponsel memakai bilah navigasi bawah. */}
+          <div className="hidden lg:block">
+            <NavAdmin menu={menu} />
+          </div>
 
           <div className="mt-auto hidden border-t border-line pt-4 lg:block">
             <Link href="/" className="mb-4 inline-block text-sm font-semibold text-hijau underline-offset-4 hover:underline">
@@ -60,14 +67,12 @@ export default async function PanelLayout({
             <p className="mt-1 truncate text-xs text-muted-fg">{s.user.email}</p>
             <TombolKeluar />
           </div>
-          <div className="flex items-center justify-between border-t border-line pt-3 lg:hidden">
-            <p className="min-w-0 truncate text-sm font-semibold text-hijau-tua">{s.user.name}</p>
-            <TombolKeluar />
-          </div>
         </div>
       </aside>
 
-      <main className="min-w-0 px-4 py-8 sm:px-8 sm:py-10">{children}</main>
+      <main className="min-w-0 px-4 pb-28 pt-6 sm:px-8 sm:pt-10 lg:pb-10 print:p-0">{children}</main>
+
+      <BilahBawah menu={menu} nama={s.user.name} peran={badge.nama} />
     </div>
   );
 }

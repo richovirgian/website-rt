@@ -3,9 +3,6 @@ import { ArrowRight, Lock } from "lucide-react";
 import { pengaturanRt } from "@/lib/pengaturan";
 import {
   AGENDA,
-  GALERI,
-  INTI,
-  KETUA,
   NILAI,
   PORTAL,
   SAMBUTAN,
@@ -13,7 +10,7 @@ import {
   STATISTIK,
   formatTanggal,
 } from "@/lib/profil";
-import { semuaArtikel } from "@/lib/artikel";
+import { artikelPublik, galeriPublik, strukturPublik } from "@/lib/situs";
 import { LogoLencana } from "@/components/site/logo";
 import { Arcs, Sparkle } from "@/components/site/decor";
 import { Reveal } from "@/components/site/reveal";
@@ -32,7 +29,8 @@ export default async function Beranda() {
   const rt = await pengaturanRt();
   const hariIni = new Date().toISOString().slice(0, 10);
   const agenda = AGENDA.filter((a) => a.tanggal >= hariIni).slice(0, 3);
-  const artikel = semuaArtikel().slice(0, 3);
+  const [semuaArtikel, struktur, galeri] = await Promise.all([artikelPublik(), strukturPublik(), galeriPublik()]);
+  const artikel = semuaArtikel.slice(0, 3);
   const kata = ["Profil", "Struktur pengurus", "Kegiatan", "Artikel", "Galeri", "Kontak"];
 
   return (
@@ -170,9 +168,9 @@ export default async function Beranda() {
           </Link>
         </Reveal>
         <ul className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {[KETUA, ...INTI].map((p, i) => (
+          {[...(struktur.ketua ? [struktur.ketua] : []), ...struktur.inti].map((p, i) => (
             <Reveal as="li" key={p.jabatan} delay={i * 90}>
-              <KartuPengurus p={p} utama={i === 0} />
+              <KartuPengurus p={p} utama={i === 0 && !!struktur.ketua} />
             </Reveal>
           ))}
         </ul>
@@ -230,6 +228,9 @@ export default async function Beranda() {
             <ArrowRight className="size-4" aria-hidden="true" />
           </Link>
         </Reveal>
+        {artikel.length === 0 ? (
+          <p className="mt-10 rounded-2xl border border-hijau/10 bg-krem-2/60 p-6 text-hijau-tua/80">Belum ada artikel.</p>
+        ) : (
         <ul className="mt-10 grid gap-5 md:grid-cols-3">
           {artikel.map((a, i) => (
             <Reveal as="li" key={a.slug} delay={i * 90}>
@@ -237,32 +238,34 @@ export default async function Beranda() {
             </Reveal>
           ))}
         </ul>
+        )}
       </section>
 
-      {/* Galeri */}
-      <section aria-labelledby="judul-galeri" className="border-t border-hijau/10 bg-krem-2 py-16 sm:py-24">
-        <div className="mx-auto max-w-6xl px-5">
-          <Reveal className="flex flex-wrap items-end justify-between gap-4">
-            <JudulSeksi eyebrow="Galeri" judul="Potret kebersamaan kami" id="judul-galeri" />
-            <Link href="/galeri" className={TAUTAN}>
-              Lihat galeri
-              <ArrowRight className="size-4" aria-hidden="true" />
-            </Link>
-          </Reveal>
-          <ul className="mt-10 grid auto-rows-[11rem] grid-cols-2 gap-4 lg:grid-cols-4">
-            {GALERI.slice(0, 4).map((f, i) => (
-              <Reveal
-                as="li"
-                key={f.judul}
-                delay={i * 70}
-                className={i === 0 ? "col-span-2 row-span-2" : i === 3 ? "col-span-2" : ""}
-              >
-                <UbinGaleri f={f} className="h-full" />
-              </Reveal>
-            ))}
-          </ul>
-        </div>
-      </section>
+      {galeri.length > 0 && (
+            <section aria-labelledby="judul-galeri" className="border-t border-hijau/10 bg-krem-2 py-16 sm:py-24">
+          <div className="mx-auto max-w-6xl px-5">
+            <Reveal className="flex flex-wrap items-end justify-between gap-4">
+              <JudulSeksi eyebrow="Galeri" judul="Potret kebersamaan kami" id="judul-galeri" />
+              <Link href="/galeri" className={TAUTAN}>
+                Lihat galeri
+                <ArrowRight className="size-4" aria-hidden="true" />
+              </Link>
+            </Reveal>
+            <ul className="mt-10 grid auto-rows-[11rem] grid-cols-2 gap-4 lg:grid-cols-4">
+              {galeri.slice(0, 4).map((f, i) => (
+                <Reveal
+                  as="li"
+                  key={f.judul}
+                  delay={i * 70}
+                  className={i === 0 ? "col-span-2 row-span-2" : i === 3 ? "col-span-2" : ""}
+                >
+                  <UbinGaleri f={f} className="h-full" />
+                </Reveal>
+              ))}
+            </ul>
+          </div>
+        </section>
+      )}
 
       {/* Fasilitas ringkas dan portal */}
       <section className="px-5 py-16 sm:py-20">

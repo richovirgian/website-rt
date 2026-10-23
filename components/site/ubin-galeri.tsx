@@ -29,6 +29,7 @@ export function UbinGaleri({
           alt={`${f.judul}. ${f.keterangan}`}
           fill
           sizes="(min-width: 1024px) 25vw, 50vw"
+          unoptimized={f.foto.startsWith("/media/")}
           className="object-cover transition-transform duration-500 group-hover:scale-105"
         />
       ) : (

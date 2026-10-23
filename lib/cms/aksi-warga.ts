@@ -9,7 +9,7 @@ import { periksaIzinAksi } from "@/lib/cms/sesi";
 import { catatAudit } from "@/lib/audit";
 import { dekripsi, enkripsi, hashIdentitas } from "@/lib/enkripsi";
 import { galatDariZod, type HasilAksi } from "@/lib/aksi";
-import { akunWargaMasuk, wargaMasuk } from "@/lib/cms/skema-warga";
+import { akunWargaMasuk, galatWajib, wargaManualMasuk, wargaMasuk } from "@/lib/cms/skema-warga";
 
 /**
  * Aksi data warga.
@@ -65,6 +65,8 @@ export async function buatWarga(mentah: unknown): Promise<HasilAksi> {
 
   const h = wargaMasuk.safeParse(mentah);
   if (!h.success) return galatDariZod(h.error);
+  const kurang = galatWajib(h.data);
+  if (Object.keys(kurang).length) return { ok: false, pesan: "Ada isian yang belum benar.", galat: kurang };
   const { nik, ...data } = h.data;
 
   try {
@@ -100,12 +102,76 @@ export async function buatWarga(mentah: unknown): Promise<HasilAksi> {
   }
 }
 
+/**
+ * Tambah warga manual dari halaman Warga. Keluarga bisa yang sudah ada di
+ * rumah itu (dan masih tinggal), atau dibuat baru bersama warganya dalam
+ * satu transaksi: tidak akan ada keluarga kosong bila penyimpanan warga gagal.
+ */
+export async function buatWargaManual(mentah: unknown): Promise<HasilAksi> {
+  const cek = await periksaIzinAksi("residents.create");
+  if (!cek.ok) return cek;
+
+  const h = wargaManualMasuk.safeParse(mentah);
+  if (!h.success) {
+    const galat: Record<string, string> = {};
+    for (const i of h.error.issues) {
+      const kunci = i.path[0] === "warga" ? String(i.path[1] ?? "form") : String(i.path[0] ?? "form");
+      galat[kunci] ??= i.message;
+    }
+    return { ok: false, pesan: "Ada isian yang belum benar.", galat };
+  }
+  const { rumahId, keluargaId, statusHunian, tanggalMasuk, warga } = h.data;
+  const { nik, ...data } = warga;
+
+  try {
+    const w = await db().$transaction(async (tx) => {
+      let idKeluarga: string;
+      if (keluargaId === "BARU") {
+        const k = await tx.keluarga.create({ data: { rumahId, statusHunian, tanggalMasuk } });
+        idKeluarga = k.id;
+      } else {
+        const k = await tx.keluarga.findFirst({ where: { id: keluargaId, rumahId, tanggalKeluar: null }, select: { id: true } });
+        if (!k) throw new Error("KELUARGA_TIDAK_SAH");
+        idKeluarga = k.id;
+      }
+      if (data.hubungan === "KEPALA_KELUARGA" && (await kepalaGanda(tx, idKeluarga))) throw new Error("KEPALA_GANDA");
+      const baru = await tx.warga.create({ data: { ...data, keluargaId: idKeluarga, statusDomisili: "AKTIF", ...bidangNik(nik) } });
+      await tx.auditLog.create({
+        data: {
+          aktorId: cek.sesi.user.id,
+          aktorNama: cek.sesi.user.name,
+          aksi: "warga.buat",
+          entitas: "warga",
+          entitasId: baru.id,
+          hasil: "berhasil",
+          metadata: { adaNik: Boolean(nik), keluargaBaru: keluargaId === "BARU", manual: true },
+        },
+      });
+      return baru;
+    });
+    revalidatePath("/admin/warga", "layout");
+    revalidatePath("/admin/rumah", "layout");
+    return { ok: true, id: w.id };
+  } catch (e) {
+    if (e instanceof Error && e.message === "KEPALA_GANDA") return { ok: false, pesan: PESAN_KEPALA_GANDA, galat: { hubungan: PESAN_KEPALA_GANDA } };
+    if (e instanceof Error && e.message === "KELUARGA_TIDAK_SAH") return { ok: false, pesan: "Keluarga itu bukan penghuni aktif rumah yang dipilih.", galat: { keluargaId: "Pilih keluarga yang sesuai." } };
+    if (sudahAda(e)) return { ok: false, pesan: PESAN_NIK_GANDA, galat: { nik: PESAN_NIK_GANDA } };
+    console.error("[warga] gagal menambah manual:", e);
+    return { ok: false, pesan: "Gagal menyimpan data warga." };
+  }
+}
+
 export async function ubahWarga(id: string, mentah: unknown): Promise<HasilAksi> {
   const cek = await periksaIzinAksi("residents.update");
   if (!cek.ok) return cek;
 
   const h = wargaMasuk.safeParse(mentah);
   if (!h.success) return galatDariZod(h.error);
+  // NIK lama tidak dikirim ke peramban: kosong boleh bila warga sudah punya NIK.
+  const lama = await db().warga.findUnique({ where: { id }, select: { nikEnkripsi: true } });
+  if (!lama) return { ok: false, pesan: "Data warga tidak ditemukan." };
+  const kurang = galatWajib(h.data, Boolean(lama.nikEnkripsi));
+  if (Object.keys(kurang).length) return { ok: false, pesan: "Ada isian yang belum benar.", galat: kurang };
   const { nik, ...data } = h.data;
 
   try {

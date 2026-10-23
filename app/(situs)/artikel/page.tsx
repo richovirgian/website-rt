@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { KATEGORI, semuaArtikel } from "@/lib/artikel";
+import { KATEGORI } from "@/lib/artikel";
+import { artikelPublik } from "@/lib/situs";
 import { cn } from "@/lib/utils";
 import { PageHero } from "@/components/site/page-hero";
 import { Reveal } from "@/components/site/reveal";
@@ -18,7 +19,7 @@ export default async function HalamanArtikel({
 }) {
   const { kategori } = await searchParams;
   const aktif = KATEGORI.find((k) => k === kategori);
-  const daftar = semuaArtikel().filter((a) => !aktif || a.kategori === aktif);
+  const daftar = (await artikelPublik()).filter((a) => !aktif || a.kategori === aktif);
 
   const chip = (href: string, label: string, terpilih: boolean) => (
     <Link

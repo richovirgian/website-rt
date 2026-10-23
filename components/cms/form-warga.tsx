@@ -42,10 +42,13 @@ export function FormWarga({
   keluargaId,
   warga,
   kembaliKe,
+  adaNik = false,
 }: {
   keluargaId: string;
   warga?: Awal;
   kembaliKe?: string;
+  /** Warga sudah punya NIK tersimpan, jadi isian NIK boleh kosong saat ubah. */
+  adaNik?: boolean;
 }) {
   const [n, setN] = useState({
     keluargaId,
@@ -70,7 +73,7 @@ export function FormWarga({
         e.preventDefault();
         jalankan(() => (warga ? ubahWarga(warga.id, n) : buatWarga(n)), {
           berhasil: warga ? "Perubahan tersimpan." : "Warga ditambahkan.",
-          ke: !warga && kembaliKe ? () => kembaliKe : undefined,
+          ke: kembaliKe ? () => kembaliKe : undefined,
           selesai: () => warga && setN((s) => ({ ...s, nik: "" })),
         });
       }}
@@ -83,20 +86,20 @@ export function FormWarga({
           <input {...p("namaLengkap")} value={n.namaLengkap} onChange={ubah("namaLengkap")} maxLength={100} required autoComplete="off" />
         </Bidang>
 
-        <Bidang id="w-nik" label="NIK" galat={galat.nik} bantuan={warga ? "Kosongkan bila tidak diubah." : "16 digit. Disimpan terenkripsi."}>
-          <input {...p("nik")} value={n.nik} onChange={ubah("nik")} inputMode="numeric" maxLength={16} autoComplete="off" />
+        <Bidang id="w-nik" label="NIK" wajib={!adaNik} galat={galat.nik} bantuan={adaNik ? "Kosongkan bila tidak diubah." : "16 digit. Disimpan terenkripsi."}>
+          <input {...p("nik")} value={n.nik} onChange={ubah("nik")} inputMode="numeric" maxLength={16} minLength={16} pattern="[0-9]{16}" required={!adaNik} autoComplete="off" />
         </Bidang>
-        <Bidang id="w-jenisKelamin" label="Jenis kelamin" galat={galat.jenisKelamin}>
-          <select {...p("jenisKelamin")} value={n.jenisKelamin} onChange={ubah("jenisKelamin")}>
-            <option value="">Belum diisi</option>
+        <Bidang id="w-jenisKelamin" label="Jenis kelamin" wajib galat={galat.jenisKelamin}>
+          <select {...p("jenisKelamin")} value={n.jenisKelamin} onChange={ubah("jenisKelamin")} required>
+            <option value="">Pilih jenis kelamin</option>
             {JENIS_KELAMIN.map((j) => (
               <option key={j} value={j}>{LABEL_JK[j]}</option>
             ))}
           </select>
         </Bidang>
 
-        <Bidang id="w-tempatLahir" label="Tempat lahir" galat={galat.tempatLahir}>
-          <input {...p("tempatLahir")} value={n.tempatLahir} onChange={ubah("tempatLahir")} maxLength={80} />
+        <Bidang id="w-tempatLahir" label="Tempat lahir" wajib galat={galat.tempatLahir}>
+          <input {...p("tempatLahir")} value={n.tempatLahir} onChange={ubah("tempatLahir")} maxLength={80} required />
         </Bidang>
         <Bidang id="w-tanggalLahir" label="Tanggal lahir" galat={galat.tanggalLahir}>
           <input {...p("tanggalLahir")} type="date" value={n.tanggalLahir} onChange={ubah("tanggalLahir")} />
@@ -117,8 +120,8 @@ export function FormWarga({
           </select>
         </Bidang>
 
-        <Bidang id="w-noHp" label="Nomor HP" galat={galat.noHp} bantuan="Contoh: 081234567890">
-          <input {...p("noHp")} type="tel" value={n.noHp} onChange={ubah("noHp")} />
+        <Bidang id="w-noHp" label="Nomor HP" wajib galat={galat.noHp} bantuan="Contoh: 081234567890">
+          <input {...p("noHp")} type="tel" value={n.noHp} onChange={ubah("noHp")} required />
         </Bidang>
         <Bidang id="w-pekerjaan" label="Pekerjaan" galat={galat.pekerjaan}>
           <input {...p("pekerjaan")} value={n.pekerjaan} onChange={ubah("pekerjaan")} maxLength={80} />

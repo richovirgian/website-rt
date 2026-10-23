@@ -48,6 +48,7 @@ export const IZIN = [
   "finance.create",
   "finance.reverse",
   "receipts.read.own",
+  "receipts.read",
 
   // Surat
   "letters.request.own",
@@ -61,6 +62,9 @@ export const IZIN = [
   "complaints.read",
   "events.manage",
 
+  // Konten situs publik
+  "content.manage",
+
   // Laporan
   "reports.read",
   "reports.export",
@@ -69,6 +73,7 @@ export type Izin = (typeof IZIN)[number];
 
 const ADMIN: readonly Izin[] = [
   "users.manage",
+  "content.manage",
   "settings.manage",
   "audit.read",
   "residents.read",
@@ -82,6 +87,7 @@ const ADMIN: readonly Izin[] = [
   "bills.cancel",
   "payments.read",
   "finance.read",
+  "receipts.read",
   "letters.approve",
   "letters.read",
   "announcements.manage",
@@ -104,6 +110,7 @@ const BENDAHARA: readonly Izin[] = [
   "finance.read",
   "finance.create",
   "finance.reverse",
+  "receipts.read",
   "reports.read",
   "reports.export",
 ];

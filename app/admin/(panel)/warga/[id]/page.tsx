@@ -78,6 +78,28 @@ export default async function HalamanDetailWarga({
         </dl>
       </section>
 
+      {boleh && (
+        <section aria-labelledby="judul-ubah" className={`${KARTU} mb-8`}>
+          <h2 id="judul-ubah" className="mb-5 text-lg font-bold text-hijau">Ubah data</h2>
+          <FormWarga
+            keluargaId={w.keluargaId}
+            kembaliKe="/admin/warga"
+            adaNik={Boolean(akhir4)}
+            warga={{
+              id: w.id,
+              namaLengkap: w.namaLengkap,
+              jenisKelamin: w.jenisKelamin,
+              tempatLahir: w.tempatLahir,
+              tanggalLahir: w.tanggalLahir,
+              hubungan: w.hubungan,
+              statusDomisili: w.statusDomisili,
+              noHp: w.noHp,
+              pekerjaan: w.pekerjaan,
+            }}
+          />
+        </section>
+      )}
+
       <section aria-labelledby="judul-akun" className={`${KARTU} mb-8`}>
         <h2 id="judul-akun" className="text-lg font-bold text-hijau">Akun login</h2>
         {w.userId ? (
@@ -95,26 +117,6 @@ export default async function HalamanDetailWarga({
           <p className="mt-2 text-sm text-muted-fg">Belum punya akun.</p>
         )}
       </section>
-
-      {boleh && (
-        <section aria-labelledby="judul-ubah" className={`${KARTU} mb-8`}>
-          <h2 id="judul-ubah" className="mb-5 text-lg font-bold text-hijau">Ubah data</h2>
-          <FormWarga
-            keluargaId={w.keluargaId}
-            warga={{
-              id: w.id,
-              namaLengkap: w.namaLengkap,
-              jenisKelamin: w.jenisKelamin,
-              tempatLahir: w.tempatLahir,
-              tanggalLahir: w.tanggalLahir,
-              hubungan: w.hubungan,
-              statusDomisili: w.statusDomisili,
-              noHp: w.noHp,
-              pekerjaan: w.pekerjaan,
-            }}
-          />
-        </section>
-      )}
 
       {boleh && !w.userId && (
         <section className="border-t border-line pt-6">

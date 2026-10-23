@@ -193,3 +193,24 @@ export const wargaUntukEkspor = () =>
       keluarga: { select: { statusHunian: true, rumah: { select: { blok: true, nomor: true } } } },
     },
   });
+
+/** Rumah beserta keluarga yang masih tinggal, untuk pilihan pada formulir tambah warga manual. */
+export const rumahUntukPilihan = () =>
+  db().rumah.findMany({
+    orderBy: [{ blok: "asc" }, { nomor: "asc" }],
+    select: {
+      id: true,
+      blok: true,
+      nomor: true,
+      keluarga: {
+        where: { tanggalKeluar: null },
+        orderBy: { dibuatPada: "asc" },
+        select: {
+          id: true,
+          statusHunian: true,
+          anggota: { where: { hubungan: "KEPALA_KELUARGA", statusDomisili: "AKTIF" }, select: { namaLengkap: true }, take: 1 },
+          _count: { select: { anggota: true } },
+        },
+      },
+    },
+  });

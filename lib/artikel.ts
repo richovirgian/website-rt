@@ -10,6 +10,8 @@ export type Artikel = {
   penulis: string;
   ringkas: string;
   isi: { judul?: string; paragraf: string[] }[];
+  /** Alamat gambar sampul (hanya untuk artikel dari database). */
+  cover?: string | null;
 };
 
 const SEMUA: Artikel[] = [

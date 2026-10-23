@@ -117,3 +117,52 @@ export const akunWargaMasuk = z.object({
     .max(100, "Sandi maksimal 100 karakter."),
 });
 export type AkunWargaMasuk = z.input<typeof akunWargaMasuk>;
+
+/** Isian yang wajib saat warga ditambah atau diubah lewat formulir (impor CSV tetap longgar). */
+export function galatWajib(
+  w: { nik: unknown; jenisKelamin: unknown; tempatLahir: unknown; noHp: unknown },
+  adaNik = false,
+): Record<string, string> {
+  const kosong = (v: unknown) => v == null || String(v).trim() === "";
+  const g: Record<string, string> = {};
+  if (kosong(w.nik) && !adaNik) g.nik = "NIK wajib diisi.";
+  if (kosong(w.jenisKelamin)) g.jenisKelamin = "Jenis kelamin wajib dipilih.";
+  if (kosong(w.tempatLahir)) g.tempatLahir = "Tempat lahir wajib diisi.";
+  if (kosong(w.noHp)) g.noHp = "Nomor HP wajib diisi.";
+  return g;
+}
+
+const UUID_SEMENTARA = "00000000-0000-4000-8000-000000000000";
+
+/**
+ * Tambah warga secara manual dari halaman Warga: pilih rumah, lalu pilih
+ * keluarga yang sudah ada atau buat keluarga baru ("BARU"). Data warganya
+ * divalidasi memakai skema yang sama dengan jalur lain.
+ */
+export const wargaManualMasuk = z
+  .object({
+    rumahId: z.string().uuid("Pilih rumah."),
+    keluargaId: z.union([z.literal("BARU"), z.string().uuid("Pilih keluarga.")]),
+    statusHunian: z.enum(HUNIAN, "Status hunian tidak dikenal."),
+    tanggalMasuk: tanggalOpsional("Tanggal masuk"),
+    warga: z.object({
+      namaLengkap: z.string(),
+      nik: z.string(),
+      jenisKelamin: z.string(),
+      tempatLahir: z.string(),
+      tanggalLahir: z.string(),
+      hubungan: z.string(),
+      noHp: z.string(),
+      pekerjaan: z.string(),
+    }),
+  })
+  .transform((d, ctx) => {
+    for (const [k, m] of Object.entries(galatWajib(d.warga))) ctx.addIssue({ code: "custom", path: ["warga", k], message: m });
+    const w = wargaMasuk.safeParse({ ...d.warga, keluargaId: UUID_SEMENTARA, statusDomisili: "AKTIF" });
+    if (!w.success) {
+      for (const i of w.error.issues) ctx.addIssue({ code: "custom", path: ["warga", ...i.path.map(String)], message: i.message });
+      return z.NEVER;
+    }
+    return { ...d, warga: w.data };
+  });
+export type WargaManualMasuk = z.input<typeof wargaManualMasuk>;

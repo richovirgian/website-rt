@@ -7,6 +7,10 @@ import { menitBaca, type Artikel } from "@/lib/artikel";
 export function KartuArtikel({ a }: { a: Artikel }) {
   return (
     <article className="group relative flex h-full flex-col rounded-2xl border border-hijau/10 bg-krem p-6 transition-all duration-300 hover:-translate-y-1 hover:border-jingga/60 hover:shadow-lg">
+      {a.cover && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={a.cover} alt="" loading="lazy" className="-mx-6 -mt-6 mb-5 aspect-[16/9] w-[calc(100%+3rem)] max-w-none rounded-t-2xl object-cover" />
+      )}
       <div className="flex items-center justify-between gap-3 text-sm">
         <span className="rounded-full bg-jingga/15 px-3 py-1 font-semibold text-hijau-tua">
           {a.kategori}

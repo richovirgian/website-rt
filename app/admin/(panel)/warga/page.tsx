@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Download, Upload } from "lucide-react";
+import { Download, Plus, Upload } from "lucide-react";
 import { wajibIzin } from "@/lib/cms/sesi";
 import { punya } from "@/lib/izin";
 import { daftarWarga, nomorHalaman, PER_HALAMAN } from "@/lib/warga";
@@ -9,6 +9,7 @@ import { JudulHalaman } from "@/components/cms/judul-halaman";
 import { KotakCari } from "@/components/cms/kotak-cari";
 import { Paginasi } from "@/components/cms/paginasi";
 import { Lencana } from "@/components/cms/lencana";
+import { DaftarResponsif } from "@/components/cms/daftar-responsif";
 import { KARTU, TOMBOL_SEKUNDER, TOMBOL_UTAMA } from "@/components/cms/gaya";
 
 export const dynamic = "force-dynamic";
@@ -28,7 +29,7 @@ export default async function HalamanWarga({
     <div>
       <JudulHalaman
         judul="Warga"
-        keterangan="Data warga di seluruh rumah. Tambah anggota lewat halaman rumah masing-masing."
+        keterangan="Data warga di seluruh rumah. Tambah manual satu per satu, atau impor banyak sekaligus dari CSV."
         aksi={
           <>
             {punya(s.peran, "residents.export") && (
@@ -38,10 +39,16 @@ export default async function HalamanWarga({
               </a>
             )}
             {punya(s.peran, "residents.create") && (
-              <Link href="/admin/warga/impor" className={TOMBOL_UTAMA}>
-                <Upload className="size-4" aria-hidden="true" />
-                Impor CSV
-              </Link>
+              <>
+                <Link href="/admin/warga/impor" className={TOMBOL_SEKUNDER}>
+                  <Upload className="size-4" aria-hidden="true" />
+                  Impor CSV
+                </Link>
+                <Link href="/admin/warga/baru" className={TOMBOL_UTAMA}>
+                  <Plus className="size-4" aria-hidden="true" />
+                  Tambah warga
+                </Link>
+              </>
             )}
           </>
         }
@@ -59,40 +66,36 @@ export default async function HalamanWarga({
           {q || status ? "Tidak ada warga yang cocok." : "Belum ada data warga."}
         </p>
       ) : (
-        <div className="overflow-x-auto rounded-2xl border border-line bg-surface">
-          <table className="w-full min-w-[44rem] text-left text-sm">
-            <thead className="bg-krem-2 text-xs uppercase tracking-wider text-muted-fg">
-              <tr>
-                <th scope="col" className="px-4 py-3">Nama</th>
-                <th scope="col" className="px-4 py-3">Rumah</th>
-                <th scope="col" className="px-4 py-3">Hubungan</th>
-                <th scope="col" className="px-4 py-3">Status</th>
-                <th scope="col" className="px-4 py-3">Akun</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-line">
-              {baris.map((w) => (
-                <tr key={w.id} className="hover:bg-krem-2/50">
-                  <td className="px-4 py-3">
-                    <Link href={`/admin/warga/${w.id}`} className="font-semibold text-hijau underline-offset-4 hover:underline">
-                      {w.namaLengkap}
-                    </Link>
-                  </td>
-                  <td className="px-4 py-3">
-                    <Link href={`/admin/rumah/${w.keluarga.rumah.id}`} className="text-hijau-tua underline-offset-4 hover:underline">
-                      {kodeRumah(w.keluarga.rumah)}
-                    </Link>
-                  </td>
-                  <td className="px-4 py-3 text-muted-fg">{LABEL_HUBUNGAN[w.hubungan]}</td>
-                  <td className="px-4 py-3">
-                    <Lencana nada={w.statusDomisili === "AKTIF" ? "hijau" : "abu"}>{LABEL_DOMISILI[w.statusDomisili]}</Lencana>
-                  </td>
-                  <td className="px-4 py-3">{w.userId ? <Lencana nada="jingga">Punya akun</Lencana> : <span className="text-muted-fg">—</span>}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <DaftarResponsif
+          label="Daftar warga"
+          baris={baris}
+          kunci={(w) => w.id}
+          kolom={[
+            {
+              judul: "Nama",
+              utama: true,
+              sel: (w) => (
+                <Link href={`/admin/warga/${w.id}`} className="underline-offset-4 hover:underline">
+                  {w.namaLengkap}
+                </Link>
+              ),
+            },
+            {
+              judul: "Rumah",
+              sel: (w) => (
+                <Link href={`/admin/rumah/${w.keluarga.rumah.id}`} className="underline-offset-4 hover:underline">
+                  {kodeRumah(w.keluarga.rumah)}
+                </Link>
+              ),
+            },
+            { judul: "Hubungan", sel: (w) => <span className="text-muted-fg">{LABEL_HUBUNGAN[w.hubungan]}</span> },
+            {
+              judul: "Status",
+              sel: (w) => <Lencana nada={w.statusDomisili === "AKTIF" ? "hijau" : "abu"}>{LABEL_DOMISILI[w.statusDomisili]}</Lencana>,
+            },
+            { judul: "Akun", sel: (w) => (w.userId ? <Lencana nada="jingga">Punya akun</Lencana> : <span className="text-muted-fg">—</span>) },
+          ]}
+        />
       )}
 
       <Paginasi jalur="/admin/warga" halaman={nomor} total={total} perHalaman={PER_HALAMAN} params={{ q, status }} />

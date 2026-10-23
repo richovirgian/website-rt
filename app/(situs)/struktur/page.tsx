@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { INTI, KETUA, SEKSI } from "@/lib/profil";
+import { strukturPublik } from "@/lib/situs";
 import { PageHero } from "@/components/site/page-hero";
 import { Reveal } from "@/components/site/reveal";
 import { JudulSeksi } from "@/components/site/judul-seksi";
@@ -17,7 +17,8 @@ function Penghubung() {
   );
 }
 
-export default function HalamanStruktur() {
+export default async function HalamanStruktur() {
+  const { ketua, inti, seksi } = await strukturPublik();
   return (
     <>
       <PageHero
@@ -32,13 +33,13 @@ export default function HalamanStruktur() {
         </h2>
 
         <Reveal className="mx-auto max-w-sm">
-          <KartuPengurus p={KETUA} utama />
+          {ketua && <KartuPengurus p={ketua} utama />}
         </Reveal>
 
         <Penghubung />
 
         <ul className="mt-6 grid gap-5 md:mt-0 md:grid-cols-3">
-          {INTI.map((p, i) => (
+          {inti.map((p, i) => (
             <Reveal as="li" key={p.jabatan} delay={i * 100}>
               <KartuPengurus p={p} />
             </Reveal>
@@ -57,7 +58,7 @@ export default function HalamanStruktur() {
             />
           </Reveal>
           <ul className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {SEKSI.map((p, i) => (
+            {seksi.map((p, i) => (
               <Reveal as="li" key={p.jabatan} delay={i * 90}>
                 <KartuPengurus p={p} />
               </Reveal>

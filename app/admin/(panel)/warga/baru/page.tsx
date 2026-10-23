@@ -3,9 +3,12 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { wajibIzin } from "@/lib/cms/sesi";
 import { db } from "@/lib/db";
+import { rumahUntukPilihan } from "@/lib/warga";
 import { kodeRumah } from "@/lib/warga-label";
 import { JudulHalaman } from "@/components/cms/judul-halaman";
 import { FormWarga } from "@/components/cms/form-warga";
+import { FormWargaManual } from "@/components/cms/form-warga-manual";
+import { LABEL_HUNIAN } from "@/lib/warga-label";
 import { KARTU, TOMBOL_UTAMA } from "@/components/cms/gaya";
 
 export const dynamic = "force-dynamic";
@@ -30,19 +33,32 @@ export default async function HalamanWargaBaru({
       : null;
 
   if (!k) {
+    const daftar = await rumahUntukPilihan();
+    const pilihan = daftar.map((r) => ({
+      id: r.id,
+      kode: kodeRumah(r),
+      keluarga: r.keluarga.map((x) => ({
+        id: x.id,
+        label: `Keluarga ${x.anggota[0]?.namaLengkap ?? "(kepala belum diisi)"} · ${LABEL_HUNIAN[x.statusHunian]} · ${x._count.anggota} anggota`,
+      })),
+    }));
     return (
-      <div className="max-w-2xl">
-        <JudulHalaman judul="Tambah warga" />
-        <div className={KARTU}>
-          <p className="leading-relaxed text-hijau-tua/85">
-            Warga ditambahkan ke sebuah keluarga. Buka halaman rumahnya, lalu
-            pilih <strong>Tambah anggota</strong> pada keluarga yang sesuai.
-            Belum ada keluarganya? Tambahkan keluarga di halaman rumah itu lebih dulu.
-          </p>
-          <Link href="/admin/rumah" className={`${TOMBOL_UTAMA} mt-5`}>
-            Buka daftar rumah
-          </Link>
-        </div>
+      <div className="max-w-3xl">
+        <Link href="/admin/warga" className="mb-4 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-hijau hover:underline">
+          <ArrowLeft className="size-4" aria-hidden="true" />
+          Semua warga
+        </Link>
+        <JudulHalaman judul="Tambah warga" keterangan="Isi manual satu per satu. Untuk banyak data sekaligus, pakai Impor CSV di halaman Warga." />
+        {pilihan.length === 0 ? (
+          <div className={KARTU}>
+            <p className="leading-relaxed text-hijau-tua/85">Belum ada rumah. Tambahkan rumah lebih dulu, baru warganya.</p>
+            <Link href="/admin/rumah" className={`${TOMBOL_UTAMA} mt-5`}>Buka daftar rumah</Link>
+          </div>
+        ) : (
+          <div className={KARTU}>
+            <FormWargaManual rumah={pilihan} />
+          </div>
+        )}
       </div>
     );
   }

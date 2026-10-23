@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { artikelBySlug, menitBaca, semuaArtikel } from "@/lib/artikel";
+import { menitBaca } from "@/lib/artikel";
+import { artikelPublik, artikelPublikBySlug } from "@/lib/situs";
 import { formatTanggal } from "@/lib/profil";
 import { Reveal } from "@/components/site/reveal";
 import { KartuArtikel } from "@/components/site/kartu-artikel";
@@ -11,16 +12,16 @@ type Props = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const a = artikelBySlug(slug);
+  const a = await artikelPublikBySlug(slug);
   return a ? { title: a.judul, description: a.ringkas } : { title: "Artikel" };
 }
 
 export default async function HalamanDetailArtikel({ params }: Props) {
   const { slug } = await params;
-  const a = artikelBySlug(slug);
+  const a = await artikelPublikBySlug(slug);
   if (!a) notFound();
 
-  const lainnya = semuaArtikel()
+  const lainnya = (await artikelPublik())
     .filter((x) => x.slug !== a.slug)
     .slice(0, 2);
 
@@ -53,6 +54,11 @@ export default async function HalamanDetailArtikel({ params }: Props) {
             {a.penulis} · {menitBaca(a)} menit baca
           </p>
         </header>
+
+        {a.cover && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={a.cover} alt={a.judul} className="mt-8 aspect-[16/9] w-full rounded-2xl border border-hijau/10 object-cover" />
+        )}
 
         <div className="mt-10 flex flex-col gap-8">
           <p className="text-xl leading-relaxed text-hijau-tua">{a.ringkas}</p>

@@ -22,6 +22,32 @@ import { PrismaClient } from "@/lib/generated/prisma";
 // Postgres menolak.
 const g = globalThis as unknown as { __db?: PrismaClient };
 
+/**
+ * Adapter pg mengirim dan membaca waktu (timestamptz) sebagai UTC tanpa
+ * zona, jadi hasilnya BENAR hanya bila zona waktu sesi database adalah UTC.
+ * Pada database berzona lain (misalnya PostgreSQL lokal berzona Asia/Jakarta)
+ * setiap waktu yang ditulis aplikasi tersimpan bergeser: waktu kegiatan,
+ * jadwal terbit, dan perbandingan dengan now() di database ikut salah, tanpa
+ * pesan galat apa pun. Supabase berzona UTC; untuk database lain jalankan
+ *   ALTER DATABASE <nama> SET timezone TO 'UTC';
+ * Pemeriksaan ini hanya mengeluh keras di log, tidak menghentikan aplikasi.
+ */
+function periksaZonaWaktu(klien: PrismaClient): void {
+  klien
+    .$queryRaw<{ zona: string }[]>`select current_setting('TimeZone') as zona`
+    .then(([r]) => {
+      if (r && !/^(utc|etc\/utc|gmt|etc\/gmt)$/i.test(r.zona)) {
+        console.error(
+          `[db] PERINGATAN: zona waktu database "${r.zona}", bukan UTC. Waktu yang disimpan aplikasi akan bergeser. ` +
+            "Jalankan: ALTER DATABASE <nama> SET timezone TO 'UTC';",
+        );
+      }
+    })
+    .catch(() => {
+      /* pemeriksaan ini tidak boleh mengganggu aplikasi */
+    });
+}
+
 export function db(): PrismaClient {
   if (g.__db) return g.__db;
 
@@ -35,6 +61,8 @@ export function db(): PrismaClient {
   const klien = new PrismaClient({
     adapter: new PrismaPg({ connectionString: url }),
   });
+
+  periksaZonaWaktu(klien);
 
   // Di produksi pun disimpan: satu instance per proses, bukan per permintaan.
   g.__db = klien;

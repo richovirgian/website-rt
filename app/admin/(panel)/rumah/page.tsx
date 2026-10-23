@@ -10,6 +10,7 @@ import { KotakCari } from "@/components/cms/kotak-cari";
 import { Paginasi } from "@/components/cms/paginasi";
 import { FormRumah } from "@/components/cms/form-rumah";
 import { Lencana } from "@/components/cms/lencana";
+import { DaftarResponsif } from "@/components/cms/daftar-responsif";
 import { KARTU } from "@/components/cms/gaya";
 
 export const dynamic = "force-dynamic";
@@ -52,53 +53,41 @@ export default async function HalamanRumah({
           {q ? "Tidak ada rumah yang cocok dengan pencarian." : "Belum ada rumah. Tambahkan rumah pertama, atau impor dari CSV di halaman Warga."}
         </p>
       ) : (
-        <div className="overflow-x-auto rounded-2xl border border-line bg-surface">
-          <table className="w-full min-w-[40rem] text-left text-sm">
-            <thead className="bg-krem-2 text-xs uppercase tracking-wider text-muted-fg">
-              <tr>
-                <th scope="col" className="px-4 py-3">Rumah</th>
-                <th scope="col" className="px-4 py-3">Alamat</th>
-                <th scope="col" className="px-4 py-3">Keluarga</th>
-                <th scope="col" className="px-4 py-3">Penghuni aktif</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-line">
-              {baris.map((r) => {
+        <DaftarResponsif
+          label="Daftar rumah"
+          baris={baris}
+          kunci={(r) => r.id}
+          kolom={[
+            {
+              judul: "Rumah",
+              utama: true,
+              sel: (r) => (
+                <Link href={`/admin/rumah/${r.id}`} className="underline-offset-4 hover:underline">
+                  {kodeRumah(r)}
+                </Link>
+              ),
+            },
+            { judul: "Alamat", sel: (r) => <span className="text-muted-fg">{r.alamat ?? "—"}</span> },
+            {
+              judul: "Keluarga",
+              sel: (r) => (r.keluarga.length === 0 ? <Lencana nada="abu">Kosong</Lencana> : `${r.keluarga.length} keluarga`),
+            },
+            {
+              judul: "Penghuni aktif",
+              sel: (r) => {
                 const penghuni = r.keluarga.flatMap((k) => k.anggota);
-                const kepala = penghuni.find((p) => p.hubungan === "KEPALA_KELUARGA");
+                const kepala = penghuni.find((x) => x.hubungan === "KEPALA_KELUARGA");
+                if (penghuni.length === 0) return "—";
                 return (
-                  <tr key={r.id} className="hover:bg-krem-2/50">
-                    <td className="px-4 py-3">
-                      <Link href={`/admin/rumah/${r.id}`} className="font-semibold text-hijau underline-offset-4 hover:underline">
-                        {kodeRumah(r)}
-                      </Link>
-                    </td>
-                    <td className="px-4 py-3 text-muted-fg">{r.alamat ?? "—"}</td>
-                    <td className="px-4 py-3">
-                      {r.keluarga.length === 0 ? (
-                        <Lencana nada="abu">Kosong</Lencana>
-                      ) : (
-                        <span>{r.keluarga.length} keluarga</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      {penghuni.length === 0 ? (
-                        "—"
-                      ) : (
-                        <>
-                          {kepala ? kepala.namaLengkap : penghuni[0]!.namaLengkap}
-                          {penghuni.length > 1 && (
-                            <span className="text-muted-fg"> +{penghuni.length - 1} orang</span>
-                          )}
-                        </>
-                      )}
-                    </td>
-                  </tr>
+                  <>
+                    {kepala ? kepala.namaLengkap : penghuni[0]!.namaLengkap}
+                    {penghuni.length > 1 && <span className="text-muted-fg"> +{penghuni.length - 1} orang</span>}
+                  </>
                 );
-              })}
-            </tbody>
-          </table>
-        </div>
+              },
+            },
+          ]}
+        />
       )}
 
       <Paginasi jalur="/admin/rumah" halaman={nomor} total={total} perHalaman={PER_HALAMAN} params={{ q }} />

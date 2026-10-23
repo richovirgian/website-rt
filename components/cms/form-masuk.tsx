@@ -101,6 +101,10 @@ export function FormMasuk({
         setGalat(
           `Terlalu banyak percobaan masuk. Coba lagi dalam ${menit} menit.`,
         );
+      } else if (error.status && error.status >= 500) {
+        // Galat server (misalnya database tidak terjangkau) bukan salah sandi.
+        // Menyebutnya "email atau sandi tidak cocok" menyesatkan pengguna.
+        setGalat("Layanan sedang bermasalah. Coba lagi sebentar lagi, atau hubungi pengurus.");
       } else if (kode === "VERIFICATION_FAILED" || kode === "MISSING_RESPONSE") {
         setGalat("Verifikasi keamanan gagal. Muat ulang halaman, lalu coba lagi.");
       } else if (kode === "UNKNOWN_ERROR") {
