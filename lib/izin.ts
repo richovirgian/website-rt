@@ -154,18 +154,18 @@ export const INFO_PERAN: Record<
     nama: "Admin (Ketua RT)",
     deskripsi:
       "Mengelola pengguna, pengaturan, data warga, tagihan, pengumuman, surat, dan pengaduan. Tidak memegang uang.",
-    kelas: "border-teal-500/30 bg-teal-500/10 text-teal-300",
+    kelas: "border-hijau/30 bg-hijau/10 text-hijau",
   },
   bendahara: {
     nama: "Bendahara",
     deskripsi:
       "Mengelola jenis iuran, tagihan, pembayaran, verifikasi transfer, dan kas. Koreksi transaksi lewat reversal.",
-    kelas: "border-amber-500/30 bg-amber-500/10 text-amber-300",
+    kelas: "border-amber-500/30 bg-amber-500/10 text-amber-800",
   },
   warga: {
     nama: "Warga",
     deskripsi:
       "Melihat data dan tagihan rumah tangganya sendiri, membayar, mengajukan surat, dan menyampaikan pengaduan.",
-    kelas: "border-blue-500/30 bg-blue-500/10 text-blue-300",
+    kelas: "border-blue-500/30 bg-blue-500/10 text-blue-800",
   },
 };

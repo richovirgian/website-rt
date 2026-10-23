@@ -30,7 +30,7 @@ export default async function HalamanAudit({
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold text-white">Audit log</h1>
+      <h1 className="text-2xl font-semibold text-hijau-tua">Audit log</h1>
       <p className="mt-1 mb-6 text-sm text-muted-fg">
         Jejak tindakan penting. Hanya bisa dibaca; tidak ada yang dapat diubah
         atau dihapus dari sini.
@@ -61,15 +61,15 @@ export default async function HalamanAudit({
                       timeStyle: "short",
                     })}
                   </td>
-                  <td className="px-4 py-3 text-white">{b.aktorNama}</td>
-                  <td className="px-4 py-3 font-mono text-xs text-white">
+                  <td className="px-4 py-3 text-hijau-tua">{b.aktorNama}</td>
+                  <td className="px-4 py-3 font-mono text-xs text-hijau-tua">
                     {b.aksi}
                   </td>
                   <td
                     className={
                       b.hasil === "berhasil"
-                        ? "px-4 py-3 text-teal-300"
-                        : "px-4 py-3 text-red-300"
+                        ? "px-4 py-3 text-hijau"
+                        : "px-4 py-3 text-red-700"
                     }
                   >
                     {b.hasil}

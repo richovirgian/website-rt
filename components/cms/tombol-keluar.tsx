@@ -20,7 +20,7 @@ export function TombolKeluar() {
         router.refresh();
         router.push("/masuk");
       }}
-      className="mt-3 inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-fg transition-colors hover:bg-white/[0.04] hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:opacity-50"
+      className="lg:mt-3 inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-fg transition-colors hover:bg-hijau/[0.06] hover:text-hijau-tua focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:opacity-50"
     >
       <LogOut className="size-4" />
       {proses ? "Keluar..." : "Keluar"}

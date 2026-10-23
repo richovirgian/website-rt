@@ -13,7 +13,7 @@ export default async function HalamanPengaturan() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold text-white">Pengaturan RT</h1>
+      <h1 className="text-2xl font-semibold text-hijau-tua">Pengaturan RT</h1>
       <p className="mt-1 mb-8 text-sm text-muted-fg">
         Identitas RT dan rekening tujuan transfer manual.
       </p>

@@ -1,0 +1,5 @@
+blok,nomor_rumah,kode_keluarga,nama,nik,jenis_kelamin,hubungan,tanggal_lahir,tempat_lahir,no_hp,pekerjaan,status_hunian
+G,1,,Contoh Kepala Keluarga,,L,Kepala keluarga,1980-05-17,Jakarta,081234567890,Karyawan,Pemilik
+G,1,,Contoh Pasangan,,P,Pasangan,1983-02-09,Bandung,,Ibu rumah tangga,Pemilik
+G,1,,Contoh Anak,,L,Anak,2010-11-23,Jakarta,,Pelajar,Pemilik
+G,2,,Contoh Penyewa,,P,Kepala keluarga,1990-08-01,Surabaya,081298765432,Wiraswasta,Penyewa

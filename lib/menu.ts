@@ -17,6 +17,9 @@ export type ButirMenu = {
 
 export const MENU: readonly ButirMenu[] = [
   { href: "/admin", label: "Ringkasan", ikon: "Home", izin: null },
+  { href: "/admin/rumah", label: "Rumah", ikon: "House", izin: "residents.read" },
+  { href: "/admin/warga", label: "Warga", ikon: "Users", izin: "residents.read" },
+  { href: "/admin/profil", label: "Profil dan rumah", ikon: "UserRound", izin: "residents.read.own" },
   { href: "/admin/pengguna", label: "Pengguna", ikon: "UserCog", izin: "users.manage" },
   { href: "/admin/pengaturan", label: "Pengaturan RT", ikon: "Settings", izin: "settings.manage" },
   { href: "/admin/audit", label: "Audit log", ikon: "ScrollText", izin: "audit.read" },

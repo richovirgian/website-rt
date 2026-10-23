@@ -51,11 +51,11 @@ export function DialogKonfirmasi({
         // Klik tepat di elemen dialog berarti mengenai latarnya, bukan isinya.
         if (e.target === ref.current && !sedangProses) onBatal();
       }}
-      className="m-auto w-[min(28rem,calc(100vw-2.5rem))] rounded-2xl border border-line-strong bg-surface p-0 text-white backdrop:bg-background/70 backdrop:backdrop-blur-sm"
+      className="m-auto w-[min(28rem,calc(100vw-2.5rem))] rounded-2xl border border-line-strong bg-surface p-0 text-hijau-tua backdrop:bg-background/70 backdrop:backdrop-blur-sm"
     >
       <div className="p-6">
         <div className="flex items-start gap-3.5">
-          <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-full bg-red-500/15 text-red-300">
+          <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-full bg-red-500/15 text-red-700">
             <TriangleAlert className="size-4" />
           </span>
           <div className="min-w-0">
@@ -71,7 +71,7 @@ export function DialogKonfirmasi({
             type="button"
             onClick={onBatal}
             disabled={sedangProses}
-            className="h-10 rounded-lg border border-line-strong px-4 text-sm font-medium text-muted-fg transition-colors hover:bg-white/[0.06] hover:text-white disabled:opacity-50"
+            className="h-10 rounded-lg border border-line-strong px-4 text-sm font-medium text-muted-fg transition-colors hover:bg-hijau/[0.06] hover:text-hijau-tua disabled:opacity-50"
           >
             Batal
           </button>
@@ -82,7 +82,7 @@ export function DialogKonfirmasi({
             // autoFocus tidak dipasang di tombol merusak: dialog yang membuka
             // dengan fokus di "Hapus" bisa terpicu oleh Enter yang masih
             // tertekan dari interaksi sebelumnya.
-            className="h-10 rounded-lg bg-red-500 px-4 text-sm font-semibold text-white transition-colors hover:bg-red-400 disabled:opacity-60"
+            className="h-10 rounded-lg bg-red-700 px-4 text-sm font-semibold text-white transition-colors hover:bg-red-800 disabled:opacity-60"
           >
             {sedangProses ? "Memproses..." : labelYa}
           </button>

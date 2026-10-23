@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-const ISIAN = "h-11 border-line-strong bg-surface text-white";
+const ISIAN = "h-11 border-line-strong bg-surface text-hijau-tua";
 
 const BIDANG: {
   nama: keyof PengaturanRt;
@@ -57,8 +57,8 @@ export function FormPengaturan({ awal }: { awal: PengaturanRt }) {
           role={pesan.ok ? "status" : "alert"}
           className={
             pesan.ok
-              ? "flex items-center gap-2.5 rounded-lg border border-teal-500/30 bg-teal-500/10 px-3.5 py-3 text-sm text-teal-200"
-              : "flex items-center gap-2.5 rounded-lg border border-red-500/30 bg-red-500/10 px-3.5 py-3 text-sm text-red-200"
+              ? "flex items-center gap-2.5 rounded-lg border border-hijau/30 bg-hijau/10 px-3.5 py-3 text-sm text-hijau"
+              : "flex items-center gap-2.5 rounded-lg border border-red-500/30 bg-red-500/10 px-3.5 py-3 text-sm text-red-700"
           }
         >
           {pesan.ok ? (
@@ -72,7 +72,7 @@ export function FormPengaturan({ awal }: { awal: PengaturanRt }) {
 
       {BIDANG.map((b) => (
         <div key={b.nama} className="flex flex-col gap-2">
-          <Label htmlFor={b.nama} className="text-white">
+          <Label htmlFor={b.nama} className="text-hijau-tua">
             {b.label}
           </Label>
           <Input
@@ -87,7 +87,7 @@ export function FormPengaturan({ awal }: { awal: PengaturanRt }) {
           />
           <p
             id={`${b.nama}-info`}
-            className={galat[b.nama] ? "text-xs text-red-300" : "text-xs text-muted-fg"}
+            className={galat[b.nama] ? "text-xs text-red-700" : "text-xs text-muted-fg"}
           >
             {galat[b.nama] ?? b.bantuan ?? ""}
           </p>

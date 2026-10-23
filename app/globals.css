@@ -5,54 +5,47 @@
 @custom-variant dark (&:is(.dark *));
 
 /* =====================================================================
-   Website Desa — DARK THEME
-   Struktur & tipografi mengikuti referensi Scalient, accent tetap teal Website Desa.
-   Ganti nilai di blok BRAND untuk mengubah seluruh situs.
+   Tema terang mengikuti logo (hijau, jingga, krem). Dipakai situs publik,
+   halaman masuk, dan panel. Ganti nilai di blok BRAND untuk mengubah semuanya.
    ===================================================================== */
 
 :root {
   /* ---- BRAND ---- */
-  --desa-teal: #3fbdb2;        /* teal Website Desa, dinaikkan luminansinya agar hidup di latar gelap */
-  --desa-teal-bright: #5bd8cc; /* hover / highlight */
-  --desa-teal-deep: #31a199;   /* teal asli brand — dipakai di latar terang */
-  --desa-orange: #f08c35;      /* accent sekunder, dipakai hemat */
-  /* Latar kartu berani. Dua-duanya cukup terang untuk menampung ikon dan teks
-     gelap: #080d0d di atasnya melewati 15:1, jauh di atas ambang AA. */
-  --desa-mint: #b6f0e9;        /* turunan teal, berani tapi tidak menyilaukan */
-  --desa-peach: #fbdcc0;       /* turunan oranye, pasangan hangatnya */
+  --desa-teal: #1f5f4a;        /* hijau logo: tombol utama, penanda aktif */
+  --desa-teal-bright: #2c7a60; /* hover / highlight */
+  --desa-teal-deep: #164536;   /* hijau tua: teks utama */
+  --desa-orange: #e08a2e;      /* jingga logo: aksen, dipakai hemat */
+  --desa-mint: #d7ebe2;        /* turunan hijau, latar lencana lembut */
+  --desa-peach: #f7dcc0;       /* turunan jingga, pasangan hangatnya */
 
-  /* ---- Netral gelap ---- */
-  --desa-bg: #080d0d;          /* latar utama */
-  --desa-surface: #111616;     /* kartu */
-  --desa-surface-2: #171d1d;   /* kartu bertingkat */
-  --desa-muted: #899698;       /* teks sekunder */
-  --ink-strong: #080d0d;
-  /* Teal versi gelap. Teal terang hanya 2,9:1 di atas kertas, gagal AA. */
-  --teal-ink: #1f5f5a;
-  /* Kata yang belum menyala tetap harus terbaca kalau scroll berhenti di
-     tengah atau JS gagal. Alpha 0.50 memberi 3,69:1 di atas putih,
-     lolos ambang AA untuk teks besar. */
-  --ink-faded: rgba(8, 13, 13, 0.5);
+  /* ---- Netral krem ---- */
+  --desa-bg: #fbf6ec;          /* latar utama */
+  --desa-surface: #fffdf8;     /* kartu */
+  --desa-surface-2: #f2e9d6;   /* kartu bertingkat, kepala tabel */
+  --desa-muted: #5b6d65;       /* teks sekunder (6,0:1 di atas krem) */
+  --ink-strong: #164536;
+  --teal-ink: #1f5f4a;
+  --ink-faded: rgba(22, 69, 54, 0.5);
 
-  --desa-line: rgba(255, 255, 255, 0.08);
-  --desa-line-strong: rgba(255, 255, 255, 0.14);
+  --desa-line: rgba(22, 69, 54, 0.12);
+  --desa-line-strong: rgba(22, 69, 54, 0.26);
 
   /* ---- Mapping token shadcn ---- */
   --background: var(--desa-bg);
-  --foreground: #ffffff;
+  --foreground: #164536;
   --card: var(--desa-surface);
-  --card-foreground: #ffffff;
-  --popover: var(--desa-surface-2);
-  --popover-foreground: #ffffff;
+  --card-foreground: #164536;
+  --popover: var(--desa-surface);
+  --popover-foreground: #164536;
   --primary: var(--desa-teal);
   --primary-foreground: var(--desa-bg);
   --secondary: var(--desa-surface-2);
-  --secondary-foreground: #ffffff;
-  --muted: var(--desa-surface);
+  --secondary-foreground: #164536;
+  --muted: var(--desa-surface-2);
   --muted-foreground: var(--desa-muted);
   --accent: var(--desa-surface-2);
   --accent-foreground: var(--desa-teal);
-  --destructive: #f87171;
+  --destructive: #b3261e;
   --border: var(--desa-line);
   --input: var(--desa-line-strong);
   --ring: var(--desa-teal);
@@ -60,13 +53,13 @@
   --chart-1: var(--desa-teal);
   --chart-2: var(--desa-orange);
   --chart-3: var(--desa-teal-bright);
-  --chart-4: #2a6f6a;
+  --chart-4: #2c7a60;
   --chart-5: var(--desa-muted);
 
   --radius: 0.75rem;
 
   --sidebar: var(--desa-surface);
-  --sidebar-foreground: #ffffff;
+  --sidebar-foreground: #164536;
   --sidebar-primary: var(--desa-teal);
   --sidebar-primary-foreground: var(--desa-bg);
   --sidebar-accent: var(--desa-surface-2);
@@ -150,7 +143,7 @@
   html {
     @apply font-sans;
     scroll-behavior: smooth;
-    color-scheme: dark;
+    color-scheme: light;
   }
   body {
     @apply bg-background text-foreground;

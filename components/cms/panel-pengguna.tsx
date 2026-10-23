@@ -46,7 +46,7 @@ const PERAN_INFO = {
 >;
 
 const ISIAN =
-  "w-full rounded-lg border border-line-strong bg-background px-3 py-2 text-sm text-white outline-none transition-colors placeholder:text-muted-fg/50 focus-visible:border-brand";
+  "w-full rounded-lg border border-line-strong bg-background px-3 py-2 text-sm text-hijau-tua outline-none transition-colors placeholder:text-muted-fg/50 focus-visible:border-brand";
 const LABEL = "block text-xs font-semibold uppercase tracking-wider text-muted-fg mb-1.5";
 
 const peranValid = (r: string | null): Role => peranDari(r);
@@ -249,7 +249,7 @@ export function PanelPengguna({
       {/* Header & Tombol Tambah */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-white">
+          <h1 className="text-2xl font-semibold text-hijau-tua">
             Manajemen Pengguna
           </h1>
           <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-fg">
@@ -279,22 +279,22 @@ export function PanelPengguna({
           className={cn(
             "mt-6 flex items-start justify-between gap-3 rounded-lg border p-3.5 text-sm transition-all",
             pesan.sukses
-              ? "border-teal-500/30 bg-teal-500/10 text-teal-200"
-              : "border-red-500/30 bg-red-500/10 text-red-200",
+              ? "border-hijau/30 bg-hijau/10 text-hijau"
+              : "border-red-500/30 bg-red-500/10 text-red-700",
           )}
         >
           <div className="flex items-start gap-2.5">
             {pesan.sukses ? (
-              <Check className="mt-0.5 size-4 shrink-0 text-teal-400" />
+              <Check className="mt-0.5 size-4 shrink-0 text-hijau" />
             ) : (
-              <TriangleAlert className="mt-0.5 size-4 shrink-0 text-red-400" />
+              <TriangleAlert className="mt-0.5 size-4 shrink-0 text-red-700" />
             )}
             <span>{pesan.teks}</span>
           </div>
           <button
             type="button"
             onClick={() => setPesan(null)}
-            className="text-muted-fg hover:text-white"
+            className="text-muted-fg hover:text-hijau-tua"
             aria-label="Tutup pemberitahuan"
           >
             <X className="size-4" />
@@ -341,7 +341,7 @@ export function PanelPengguna({
                   return (
                     <tr
                       key={p.id}
-                      className="transition-colors hover:bg-white/[0.02]"
+                      className="transition-colors hover:bg-hijau/[0.06]"
                     >
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
@@ -350,11 +350,11 @@ export function PanelPengguna({
                           </div>
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
-                              <span className="font-medium text-white truncate max-w-xs">
+                              <span className="font-medium text-hijau-tua truncate max-w-xs">
                                 {p.name}
                               </span>
                               {adalahDiriSendiri && (
-                                <span className="rounded bg-white/[0.08] px-1.5 py-0.5 text-[10px] font-medium text-brand">
+                                <span className="rounded bg-hijau/[0.08] px-1.5 py-0.5 text-[10px] font-medium text-brand">
                                   Anda
                                 </span>
                               )}
@@ -388,7 +388,7 @@ export function PanelPengguna({
                             type="button"
                             onClick={() => setTargetUbahPeran(p)}
                             title="Ubah peran pengguna"
-                            className="grid size-8 place-items-center rounded-lg border border-transparent text-muted-fg transition-colors hover:border-line-strong hover:bg-white/[0.04] hover:text-white"
+                            className="grid size-8 place-items-center rounded-lg border border-transparent text-muted-fg transition-colors hover:border-line-strong hover:bg-hijau/[0.06] hover:text-hijau-tua"
                           >
                             <Shield className="size-4" />
                             <span className="sr-only">Ubah peran {p.name}</span>
@@ -398,7 +398,7 @@ export function PanelPengguna({
                             type="button"
                             onClick={() => setTargetUbahSandi(p)}
                             title="Ubah kata sandi"
-                            className="grid size-8 place-items-center rounded-lg border border-transparent text-muted-fg transition-colors hover:border-line-strong hover:bg-white/[0.04] hover:text-white"
+                            className="grid size-8 place-items-center rounded-lg border border-transparent text-muted-fg transition-colors hover:border-line-strong hover:bg-hijau/[0.06] hover:text-hijau-tua"
                           >
                             <KeyRound className="size-4" />
                             <span className="sr-only">
@@ -419,7 +419,7 @@ export function PanelPengguna({
                               "grid size-8 place-items-center rounded-lg border border-transparent text-muted-fg transition-colors",
                               adalahDiriSendiri
                                 ? "cursor-not-allowed opacity-30"
-                                : "hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-300",
+                                : "hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-700",
                             )}
                           >
                             <Trash2 className="size-4" />
@@ -450,7 +450,7 @@ export function PanelPengguna({
             setBukaTambah(false);
           }
         }}
-        className="m-auto w-[min(34rem,calc(100vw-2.5rem))] rounded-2xl border border-line-strong bg-surface p-0 text-white backdrop:bg-background/70 backdrop:backdrop-blur-sm"
+        className="m-auto w-[min(34rem,calc(100vw-2.5rem))] rounded-2xl border border-line-strong bg-surface p-0 text-hijau-tua backdrop:bg-background/70 backdrop:backdrop-blur-sm"
       >
         <div className="p-6">
           <div className="flex items-start justify-between gap-4">
@@ -468,7 +468,7 @@ export function PanelPengguna({
             <button
               type="button"
               onClick={() => !sedangJalan && setBukaTambah(false)}
-              className="rounded-lg p-1 text-muted-fg hover:bg-white/[0.06] hover:text-white"
+              className="rounded-lg p-1 text-muted-fg hover:bg-hijau/[0.06] hover:text-hijau-tua"
             >
               <X className="size-4" />
             </button>
@@ -490,7 +490,7 @@ export function PanelPengguna({
                 className={ISIAN}
               />
               {galatForm.nama && (
-                <p className="mt-1 text-xs text-red-300">{galatForm.nama}</p>
+                <p className="mt-1 text-xs text-red-700">{galatForm.nama}</p>
               )}
             </div>
 
@@ -509,7 +509,7 @@ export function PanelPengguna({
                 className={ISIAN}
               />
               {galatForm.email && (
-                <p className="mt-1 text-xs text-red-300">{galatForm.email}</p>
+                <p className="mt-1 text-xs text-red-700">{galatForm.email}</p>
               )}
             </div>
 
@@ -531,7 +531,7 @@ export function PanelPengguna({
                 <button
                   type="button"
                   onClick={() => setLihatSandiTambah((v) => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-fg hover:text-white"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-fg hover:text-hijau-tua"
                   aria-label={lihatSandiTambah ? "Sembunyikan sandi" : "Lihat sandi"}
                 >
                   {lihatSandiTambah ? (
@@ -542,7 +542,7 @@ export function PanelPengguna({
                 </button>
               </div>
               {galatForm.sandi && (
-                <p className="mt-1 text-xs text-red-300">{galatForm.sandi}</p>
+                <p className="mt-1 text-xs text-red-700">{galatForm.sandi}</p>
               )}
             </div>
 
@@ -571,11 +571,11 @@ export function PanelPengguna({
                         onChange={() =>
                           setFormTambah((f) => ({ ...f, role: r }))
                         }
-                        className="mt-1 size-4 accent-[#0df2c9]"
+                        className="mt-1 size-4 accent-[#1f5f4a]"
                       />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-semibold text-white">
+                          <span className="text-sm font-semibold text-hijau-tua">
                             {info.nama}
                           </span>
                           <span
@@ -603,7 +603,7 @@ export function PanelPengguna({
               type="button"
               onClick={() => setBukaTambah(false)}
               disabled={sedangJalan}
-              className="h-10 rounded-lg border border-line-strong px-4 text-sm font-medium text-muted-fg transition-colors hover:bg-white/[0.06] hover:text-white disabled:opacity-50"
+              className="h-10 rounded-lg border border-line-strong px-4 text-sm font-medium text-muted-fg transition-colors hover:bg-hijau/[0.06] hover:text-hijau-tua disabled:opacity-50"
             >
               Batal
             </button>
@@ -648,12 +648,12 @@ export function PanelPengguna({
             setTargetUbahPeran(null);
           }
         }}
-        className="m-auto w-[min(34rem,calc(100vw-2.5rem))] rounded-2xl border border-line-strong bg-surface p-0 text-white backdrop:bg-background/70 backdrop:backdrop-blur-sm"
+        className="m-auto w-[min(34rem,calc(100vw-2.5rem))] rounded-2xl border border-line-strong bg-surface p-0 text-hijau-tua backdrop:bg-background/70 backdrop:backdrop-blur-sm"
       >
         <div className="p-6">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-3">
-              <span className="grid size-10 place-items-center rounded-full bg-blue-500/10 text-blue-400">
+              <span className="grid size-10 place-items-center rounded-full bg-blue-500/10 text-blue-800">
                 <ShieldCheck className="size-5" />
               </span>
               <div>
@@ -666,15 +666,15 @@ export function PanelPengguna({
             <button
               type="button"
               onClick={() => !sedangJalan && setTargetUbahPeran(null)}
-              className="rounded-lg p-1 text-muted-fg hover:bg-white/[0.06] hover:text-white"
+              className="rounded-lg p-1 text-muted-fg hover:bg-hijau/[0.06] hover:text-hijau-tua"
             >
               <X className="size-4" />
             </button>
           </div>
 
           {targetUbahPeran?.id === sesiUserId && (
-            <div className="mt-4 flex items-start gap-2.5 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-200">
-              <ShieldAlert className="mt-0.5 size-4 shrink-0 text-amber-400" />
+            <div className="mt-4 flex items-start gap-2.5 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-800">
+              <ShieldAlert className="mt-0.5 size-4 shrink-0 text-amber-800" />
               <span>
                 <strong>Perhatian:</strong> Anda sedang mengubah peran akun Anda
                 sendiri. Pastikan setidaknya masih ada satu Admin lain bila
@@ -704,11 +704,11 @@ export function PanelPengguna({
                     value={r}
                     checked={terpilih}
                     onChange={() => setPeranDipilih(r)}
-                    className="mt-1 size-4 accent-[#0df2c9]"
+                    className="mt-1 size-4 accent-[#1f5f4a]"
                   />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-white">
+                      <span className="text-sm font-semibold text-hijau-tua">
                         {info.nama}
                       </span>
                       <span
@@ -734,7 +734,7 @@ export function PanelPengguna({
               type="button"
               onClick={() => setTargetUbahPeran(null)}
               disabled={sedangJalan}
-              className="h-10 rounded-lg border border-line-strong px-4 text-sm font-medium text-muted-fg transition-colors hover:bg-white/[0.06] hover:text-white disabled:opacity-50"
+              className="h-10 rounded-lg border border-line-strong px-4 text-sm font-medium text-muted-fg transition-colors hover:bg-hijau/[0.06] hover:text-hijau-tua disabled:opacity-50"
             >
               Batal
             </button>
@@ -774,12 +774,12 @@ export function PanelPengguna({
             setTargetUbahSandi(null);
           }
         }}
-        className="m-auto w-[min(32rem,calc(100vw-2.5rem))] rounded-2xl border border-line-strong bg-surface p-0 text-white backdrop:bg-background/70 backdrop:backdrop-blur-sm"
+        className="m-auto w-[min(32rem,calc(100vw-2.5rem))] rounded-2xl border border-line-strong bg-surface p-0 text-hijau-tua backdrop:bg-background/70 backdrop:backdrop-blur-sm"
       >
         <div className="p-6">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-3">
-              <span className="grid size-10 place-items-center rounded-full bg-amber-500/10 text-amber-400">
+              <span className="grid size-10 place-items-center rounded-full bg-amber-500/10 text-amber-800">
                 <KeyRound className="size-5" />
               </span>
               <div>
@@ -792,7 +792,7 @@ export function PanelPengguna({
             <button
               type="button"
               onClick={() => !sedangJalan && setTargetUbahSandi(null)}
-              className="rounded-lg p-1 text-muted-fg hover:bg-white/[0.06] hover:text-white"
+              className="rounded-lg p-1 text-muted-fg hover:bg-hijau/[0.06] hover:text-hijau-tua"
             >
               <X className="size-4" />
             </button>
@@ -815,7 +815,7 @@ export function PanelPengguna({
                 <button
                   type="button"
                   onClick={() => setLihatSandiBaru((v) => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-fg hover:text-white"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-fg hover:text-hijau-tua"
                   aria-label={lihatSandiBaru ? "Sembunyikan sandi" : "Lihat sandi"}
                 >
                   {lihatSandiBaru ? (
@@ -826,7 +826,7 @@ export function PanelPengguna({
                 </button>
               </div>
               {galatForm.sandi && (
-                <p className="mt-1 text-xs text-red-300">{galatForm.sandi}</p>
+                <p className="mt-1 text-xs text-red-700">{galatForm.sandi}</p>
               )}
             </div>
 
@@ -843,7 +843,7 @@ export function PanelPengguna({
                 className={ISIAN}
               />
               {galatForm.konfirmasi && (
-                <p className="mt-1 text-xs text-red-300">
+                <p className="mt-1 text-xs text-red-700">
                   {galatForm.konfirmasi}
                 </p>
               )}
@@ -855,7 +855,7 @@ export function PanelPengguna({
               type="button"
               onClick={() => setTargetUbahSandi(null)}
               disabled={sedangJalan}
-              className="h-10 rounded-lg border border-line-strong px-4 text-sm font-medium text-muted-fg transition-colors hover:bg-white/[0.06] hover:text-white disabled:opacity-50"
+              className="h-10 rounded-lg border border-line-strong px-4 text-sm font-medium text-muted-fg transition-colors hover:bg-hijau/[0.06] hover:text-hijau-tua disabled:opacity-50"
             >
               Batal
             </button>

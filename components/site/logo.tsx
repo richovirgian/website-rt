@@ -52,7 +52,7 @@ export function Logo({
       <LogoLencana ukuran={ringkas ? "size-9" : "size-11"} />
       <span
         className={cn(
-          "font-semibold leading-tight text-white",
+          "font-semibold leading-tight text-hijau-tua",
           ringkas ? "text-sm" : "text-lg",
         )}
       >

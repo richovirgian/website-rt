@@ -17,6 +17,113 @@ datasource db {
 }
 
 // ===========================================================================
+// WARGA, KELUARGA, RUMAH (Tahap 1)
+//
+// Akun login (`User`) dan data identitas (`Warga`) dipisah. Satu warga boleh
+// tidak punya akun, dan satu rumah boleh dihuni lebih dari satu keluarga.
+//
+// Tidak ada penghapusan lunak. Siklus hidup dicatat lewat status:
+// `Warga.statusDomisili` dan `Keluarga.tanggalKeluar`. Penghapusan sungguhan
+// hanya untuk salah input, dan foreign key RESTRICT mencegahnya begitu data
+// itu dipakai tagihan atau pembayaran.
+// ===========================================================================
+
+enum StatusHunian {
+  PEMILIK
+  PENYEWA
+  LAINNYA
+}
+
+enum JenisKelamin {
+  LAKI_LAKI
+  PEREMPUAN
+}
+
+enum HubunganKeluarga {
+  KEPALA_KELUARGA
+  PASANGAN
+  ANAK
+  ORANG_TUA
+  FAMILI_LAIN
+  LAINNYA
+}
+
+enum StatusDomisili {
+  AKTIF
+  PINDAH
+  MENINGGAL
+}
+
+/// Satu bangunan hunian. Alamatnya dikenali lewat blok dan nomor.
+model Rumah {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  blok       String   @default("G")
+  nomor      String
+  alamat     String?
+  catatan    String?
+  dibuatPada DateTime @default(now()) @map("dibuat_pada") @db.Timestamptz(6)
+  diubahPada DateTime @updatedAt @map("diubah_pada") @db.Timestamptz(6)
+
+  keluarga Keluarga[]
+
+  @@unique([blok, nomor])
+  @@map("rumah")
+}
+
+/// Satu rumah tangga yang menempati satu rumah pada suatu periode.
+/// Riwayat penghuni sebuah rumah adalah daftar keluarganya diurutkan menurut
+/// `tanggalMasuk`. Keluarga yang masih tinggal punya `tanggalKeluar` kosong.
+model Keluarga {
+  id            String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  rumahId       String       @map("rumah_id") @db.Uuid
+  statusHunian  StatusHunian @default(PEMILIK) @map("status_hunian")
+  tanggalMasuk  DateTime?    @map("tanggal_masuk") @db.Date
+  tanggalKeluar DateTime?    @map("tanggal_keluar") @db.Date
+  catatan       String?
+  dibuatPada    DateTime     @default(now()) @map("dibuat_pada") @db.Timestamptz(6)
+  diubahPada    DateTime     @updatedAt @map("diubah_pada") @db.Timestamptz(6)
+
+  rumah   Rumah   @relation(fields: [rumahId], references: [id], onDelete: Restrict)
+  anggota Warga[]
+
+  @@index([rumahId])
+  @@map("keluarga")
+}
+
+/// Data identitas satu orang.
+///
+/// NIK TIDAK disimpan polos. `nikEnkripsi` berisi ciphertext AES-256-GCM,
+/// `nikHash` adalah HMAC untuk mendeteksi duplikat tanpa membuka isinya, dan
+/// `nikAkhir4` untuk tampilan tersamar. Lihat lib/enkripsi.ts.
+model Warga {
+  id             String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  keluargaId     String           @map("keluarga_id") @db.Uuid
+  namaLengkap    String           @map("nama_lengkap")
+  nikEnkripsi    String?          @map("nik_enkripsi")
+  nikHash        String?          @unique @map("nik_hash")
+  nikAkhir4      String?          @map("nik_akhir4")
+  jenisKelamin   JenisKelamin?    @map("jenis_kelamin")
+  tempatLahir    String?          @map("tempat_lahir")
+  tanggalLahir   DateTime?        @map("tanggal_lahir") @db.Date
+  hubungan       HubunganKeluarga @default(LAINNYA)
+  statusDomisili StatusDomisili   @default(AKTIF) @map("status_domisili")
+  noHp           String?          @map("no_hp")
+  pekerjaan      String?
+  /// Akun login milik orang ini, bila ada. Satu akun untuk satu warga.
+  userId         String?          @unique @map("user_id")
+  dibuatPada     DateTime         @default(now()) @map("dibuat_pada") @db.Timestamptz(6)
+  diubahPada     DateTime         @updatedAt @map("diubah_pada") @db.Timestamptz(6)
+
+  keluarga Keluarga @relation(fields: [keluargaId], references: [id], onDelete: Restrict)
+  user     User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([keluargaId])
+  @@index([namaLengkap])
+  @@index([statusDomisili])
+  @@map("warga")
+}
+
+// ===========================================================================
 // PENGATURAN
 // ===========================================================================
 
@@ -97,6 +204,7 @@ model User {
 
   sessions Session[]
   accounts Account[]
+  warga    Warga?
 
   @@map("user")
 }
