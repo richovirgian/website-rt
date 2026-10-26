@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import type { Prisma } from "@/lib/generated/prisma";
+import { hariIni, tanggalUtc } from "@/lib/uang";
 
 /**
  * Kueri baca data rumah, keluarga, dan warga.
@@ -83,22 +84,57 @@ export function detailRumah(id: string, identitas: boolean) {
   });
 }
 
+/** Tab status di halaman Warga: Tetap = aktif berstatus pemilik, Kontrak = aktif berstatus penyewa. */
+export const TAB_WARGA = ["SEMUA", "TETAP", "KONTRAK", "PINDAH"] as const;
+export type TabWarga = (typeof TAB_WARGA)[number];
+
+const filterTab = (status: string | undefined): Prisma.WargaWhereInput => {
+  switch (status) {
+    case "TETAP":
+      return { statusDomisili: "AKTIF", keluarga: { statusHunian: "PEMILIK" } };
+    case "KONTRAK":
+      return { statusDomisili: "AKTIF", keluarga: { statusHunian: "PENYEWA" } };
+    case "PINDAH":
+    case "MENINGGAL":
+      return { statusDomisili: status };
+    case "AKTIF":
+      return { statusDomisili: "AKTIF" };
+    default:
+      return {};
+  }
+};
+
+/** Kata kunci cocok dengan nama, kode rumah (G-12), atau 4 digit akhir NIK (khusus peran berizin identitas). */
+export const filterCari = (q: string | undefined, identitas: boolean): Prisma.WargaWhereInput => {
+  if (!q) return {};
+  const atau: Prisma.WargaWhereInput[] = [{ namaLengkap: { contains: q, mode: "insensitive" } }];
+  const kode = /^([a-z]+)\s*[-\s]?\s*0*(\d+)$/i.exec(q);
+  if (kode) {
+    atau.push({ keluarga: { rumah: { blok: { equals: kode[1]!, mode: "insensitive" }, nomor: kode[2]! } } });
+  } else {
+    atau.push({ keluarga: { rumah: { blok: { contains: q, mode: "insensitive" } } } });
+  }
+  if (identitas && /^\d{4}$/.test(q)) atau.push({ nikAkhir4: q });
+  return { OR: atau };
+};
+
 export async function daftarWarga({
   q,
   status,
   halaman,
+  identitas = false,
+  denganIuran = false,
 }: {
   q?: string;
   status?: string;
   halaman: number;
+  identitas?: boolean;
+  denganIuran?: boolean;
 }) {
-  const where: Prisma.WargaWhereInput = {
-    ...(q ? { namaLengkap: { contains: q, mode: "insensitive" } } : {}),
-    ...(status === "AKTIF" || status === "PINDAH" || status === "MENINGGAL"
-      ? { statusDomisili: status }
-      : {}),
-  };
-  const [baris, total] = await Promise.all([
+  const where: Prisma.WargaWhereInput = { AND: [filterTab(status), filterCari(q, identitas)] };
+  const hariIniDb = tanggalUtc(hariIni());
+
+  const [baris, total, semua, aktif, tetap, kontrak, pindah, kepala, rumahTerisi, rumahNunggak] = await Promise.all([
     db().warga.findMany({
       where,
       orderBy: { namaLengkap: "asc" },
@@ -111,12 +147,41 @@ export async function daftarWarga({
         statusDomisili: true,
         noHp: true,
         userId: true,
-        keluarga: { select: { rumah: { select: { id: true, blok: true, nomor: true } } } },
+        ...(identitas ? { nikAkhir4: true } : {}),
+        keluarga: { select: { statusHunian: true, rumah: { select: { id: true, blok: true, nomor: true } } } },
       },
     }),
     db().warga.count({ where }),
+    db().warga.count(),
+    db().warga.count({ where: { statusDomisili: "AKTIF" } }),
+    db().warga.count({ where: filterTab("TETAP") }),
+    db().warga.count({ where: filterTab("KONTRAK") }),
+    db().warga.count({ where: filterTab("PINDAH") }),
+    db().warga.count({ where: { statusDomisili: "AKTIF", hubungan: "KEPALA_KELUARGA" } }),
+    db().rumah.count({ where: { keluarga: { some: { tanggalKeluar: null, anggota: { some: { statusDomisili: "AKTIF" } } } } } }),
+    denganIuran
+      ? db().tagihan.findMany({ where: { status: "UNPAID", jatuhTempo: { lt: hariIniDb } }, distinct: ["rumahId"], select: { rumahId: true } }).then((r) => r.length)
+      : Promise.resolve(0),
   ]);
-  return { baris, total };
+
+  // Status iuran per rumah, hanya untuk rumah yang tampil di halaman ini.
+  const iuran = new Map<string, { nunggak: number; ada: boolean }>();
+  if (denganIuran && baris.length) {
+    const rumahIds = [...new Set(baris.map((b) => b.keluarga.rumah.id))];
+    const [lewat, ada] = await Promise.all([
+      db().tagihan.groupBy({ by: ["rumahId"], where: { rumahId: { in: rumahIds }, status: "UNPAID", jatuhTempo: { lt: hariIniDb } }, _count: { _all: true } }),
+      db().tagihan.groupBy({ by: ["rumahId"], where: { rumahId: { in: rumahIds }, status: { in: ["UNPAID", "PAID"] } }, _count: { _all: true } }),
+    ]);
+    for (const id of rumahIds) iuran.set(id, { nunggak: lewat.find((x) => x.rumahId === id)?._count._all ?? 0, ada: ada.some((x) => x.rumahId === id) });
+  }
+
+  return {
+    baris,
+    total,
+    iuran,
+    hitung: { SEMUA: semua, TETAP: tetap, KONTRAK: kontrak, PINDAH: pindah } satisfies Record<TabWarga, number>,
+    statistik: { aktif, kepala, rumahTerisi, rumahNunggak },
+  };
 }
 
 export function detailWarga(id: string, identitas: boolean) {

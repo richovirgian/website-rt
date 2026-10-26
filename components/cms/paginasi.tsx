@@ -24,7 +24,7 @@ export function Paginasi({
     p.set("halaman", String(n));
     return `${jalur}?${p.toString()}`;
   };
-  const tautan = "rounded-lg border border-line-strong bg-surface px-3.5 py-2 text-sm font-semibold text-hijau hover:bg-krem-2";
+  const tautan = "inline-flex min-h-11 items-center rounded-lg border border-line-strong bg-surface px-3 text-[13px] text-hijau-tua hover:bg-krem-2 sm:min-h-8";
   return (
     <nav aria-label="Halaman" className="mt-4 flex flex-wrap items-center gap-3 text-sm">
       {halaman > 1 && (

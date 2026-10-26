@@ -1,14 +1,42 @@
 import Link from "next/link";
+import { Geist, Geist_Mono } from "next/font/google";
+import { ExternalLink } from "lucide-react";
 import { wajibMasuk, peranPengguna } from "@/lib/cms/sesi";
 import { INFO_PERAN, punya } from "@/lib/izin";
 import { MENU } from "@/lib/menu";
 import { pengaturanRt } from "@/lib/pengaturan";
-import { Logo } from "@/components/site/logo";
+import { db } from "@/lib/db";
+import { LogoLencana } from "@/components/site/logo";
 import { TombolKeluar } from "@/components/cms/tombol-keluar";
 import { NavAdmin } from "@/components/cms/nav-admin";
 import { BilahBawah } from "@/components/cms/bilah-bawah";
 import { LoncengNotifikasi } from "@/components/cms/lonceng-notifikasi";
+import { Remah } from "@/components/cms/remah";
+import { CariGlobal } from "@/components/cms/cari-global";
 import { jumlahNotifikasiBelumDibaca } from "@/lib/komunikasi-kueri";
+
+const geist = Geist({ subsets: ["latin"], variable: "--font-geist", display: "swap" });
+const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono", display: "swap" });
+
+const inisial = (nama: string) =>
+  nama
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((k) => k[0]!.toUpperCase())
+    .join("") || "?";
+
+/** Jumlah yang menunggu ditangani, untuk lencana menu. Gagal baca tidak boleh merusak panel. */
+async function antrean(peran: ReturnType<typeof peranPengguna>) {
+  const hasil: { href: string; badge: number }[] = [];
+  try {
+    if (punya(peran, "letters.read")) hasil.push({ href: "/admin/surat", badge: await db().pengajuanSurat.count({ where: { status: "DIAJUKAN" } }) });
+    if (punya(peran, "complaints.read")) hasil.push({ href: "/admin/pengaduan", badge: await db().pengaduan.count({ where: { status: "BARU" } }) });
+  } catch {
+    return [];
+  }
+  return hasil;
+}
 
 /**
  * Shell panel, sekaligus penjaga sesi.
@@ -33,44 +61,63 @@ export default async function PanelLayout({
 
   const menu = MENU.filter((m) => m.izin === null || punya(peran, m.izin));
 
+  const bagian = await antrean(peran);
+
   return (
-    <div className="min-h-dvh lg:grid lg:grid-cols-[17rem_1fr]">
-      <aside className="border-b border-line bg-surface print:hidden lg:sticky lg:top-0 lg:h-dvh lg:border-b-0 lg:border-r">
-        <div className="flex h-full flex-col gap-4 p-4 lg:gap-6 lg:p-5">
-          <div className="flex items-center justify-between gap-3">
-            <Link href="/admin" className="shrink-0 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-hijau">
-              <Logo nama={rt.namaRt} ringkas />
-            </Link>
-            <div className="flex items-center gap-1">
-              <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider lg:hidden ${badge.kelas}`}>
-                {badge.nama}
+    <div className={`panel ${geist.variable} ${geistMono.variable} min-h-dvh lg:grid lg:grid-cols-[280px_1fr]`}>
+      {/* Ponsel: kepala gelap. Layar lebar: menu samping. */}
+      <header className="sticky top-0 z-30 flex items-center gap-2.5 border-b border-[var(--side)] bg-[var(--side)] px-4 py-2 text-[var(--side-strong)] print:hidden lg:hidden">
+        <Link href="/admin" className="flex min-w-0 flex-1 items-center gap-2.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--side-accent)]">
+          <LogoLencana ukuran="size-8" />
+          <span className="truncate text-[15px] font-semibold">{rt.namaRt}</span>
+        </Link>
+        <CariGlobal menu={menu} varian="ikon" />
+        <LoncengNotifikasi jumlah={belumDibaca} gelap />
+      </header>
+
+      <aside className="hidden border-r border-[var(--side-border)] bg-[var(--side)] text-[var(--side-strong)] print:hidden lg:sticky lg:top-0 lg:block lg:h-dvh">
+        <div className="flex h-full flex-col gap-4 overflow-y-auto p-4 pt-5">
+          <div className="flex items-center gap-2.5 px-1.5">
+            <Link href="/admin" className="flex min-w-0 flex-1 items-center gap-2.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--side-accent)]">
+              <LogoLencana ukuran="size-11" />
+              <span className="flex min-w-0 flex-col gap-px">
+                <span className="truncate text-base font-semibold">{rt.namaRt}</span>
+                <span className="truncate text-[13px] text-[var(--side-muted)]">{rt.alamat}</span>
               </span>
-              <LoncengNotifikasi jumlah={belumDibaca} />
-            </div>
+            </Link>
+            <LoncengNotifikasi jumlah={belumDibaca} gelap />
           </div>
 
-          {/* Layar lebar: menu samping. Ponsel memakai bilah navigasi bawah. */}
-          <div className="hidden lg:block">
-            <NavAdmin menu={menu} />
-          </div>
+          <CariGlobal menu={menu} />
 
-          <div className="mt-auto hidden border-t border-line pt-4 lg:block">
-            <Link href="/" className="mb-4 inline-block text-sm font-semibold text-hijau underline-offset-4 hover:underline">
+          <NavAdmin menu={menu} bagian={bagian} />
+
+          <div className="mt-auto flex flex-col gap-2">
+            <Link
+              href="/"
+              className="flex h-10 shrink-0 items-center gap-3 rounded-lg px-3 text-[15px] text-[var(--side-text)] transition-colors hover:bg-white/[0.09] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--side-accent)]"
+            >
+              <ExternalLink className="size-[18px]" aria-hidden="true" />
               Lihat situs publik
             </Link>
-            <p className="truncate text-sm font-semibold text-hijau-tua">{s.user.name}</p>
-            <span
-              className={`mt-1 inline-block rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${badge.kelas}`}
-            >
-              {badge.nama}
-            </span>
-            <p className="mt-1 truncate text-xs text-muted-fg">{s.user.email}</p>
-            <TombolKeluar />
+            <div className="flex items-center gap-2.5 rounded-xl border border-[var(--side-border)] bg-[var(--side-surface)] p-2.5">
+              <span aria-hidden="true" className="grid size-10 shrink-0 place-items-center rounded-full bg-jingga text-sm font-semibold text-[#1c1917]">
+                {inisial(s.user.name)}
+              </span>
+              <span className="flex min-w-0 flex-1 flex-col">
+                <span className="truncate text-sm font-semibold">{s.user.name}</span>
+                <span className="truncate text-[13px] text-[var(--side-muted)]">{badge.nama} · {s.user.email}</span>
+              </span>
+              <TombolKeluar ikon />
+            </div>
           </div>
         </div>
       </aside>
 
-      <main className="min-w-0 px-4 pb-28 pt-6 sm:px-8 sm:pt-10 lg:pb-10 print:p-0">{children}</main>
+      <main className="min-w-0 px-4 pb-28 pt-5 sm:px-8 lg:px-12 lg:pb-12 lg:pt-6 print:p-0">
+        <Remah />
+        {children}
+      </main>
 
       <BilahBawah menu={menu} nama={s.user.name} peran={badge.nama} />
     </div>

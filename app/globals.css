@@ -58,6 +58,13 @@
 
   --radius: 0.75rem;
 
+  /* Warna bernama yang dipakai kelas hijau, hijau-tua, krem, krem-2. Situs
+     publik memakai nilai logo ini; panel admin menimpanya di .panel. */
+  --p-hijau: #1f5f4a;
+  --p-hijau-tua: #164536;
+  --p-krem: #fbf6ec;
+  --p-krem-2: #f2e9d6;
+
   --sidebar: var(--desa-surface);
   --sidebar-foreground: #164536;
   --sidebar-primary: var(--desa-teal);
@@ -91,11 +98,11 @@
   --color-peach: var(--desa-peach);
   /* Palet logo Warga Blok G, dipakai halaman publik. Panel admin masih
      memakai palet gelap di atas. */
-  --color-hijau: #1f5f4a;
-  --color-hijau-tua: #164536;
+  --color-hijau: var(--p-hijau);
+  --color-hijau-tua: var(--p-hijau-tua);
   --color-jingga: #e08a2e;
-  --color-krem: #fbf6ec;
-  --color-krem-2: #f2e9d6;
+  --color-krem: var(--p-krem);
+  --color-krem-2: var(--p-krem-2);
 
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -501,4 +508,41 @@
     opacity: 1 !important;
     transform: none !important;
   }
+}
+
+
+/* =====================================================================
+   Tema panel admin: "Navy" (sidebar biru tua, konten biru keabuan) dengan
+   hijau logo untuk tombol utama dan tautan. Hanya berlaku di dalam .panel,
+   jadi situs publik dan halaman masuk tidak berubah. Untuk mengganti tema
+   panel, ubah nilai di blok ini.
+   ===================================================================== */
+.panel {
+  --desa-bg: #e8ecf0;
+  --desa-surface: #f3f6f8;
+  --desa-surface-2: #e2e7ec;
+  --desa-line: #dce2e8;
+  --desa-line-strong: #cdd5dd;
+  --desa-muted: #625d58;
+  --background: #e8ecf0;
+  --p-hijau: #1f5f4a;
+  --p-hijau-tua: #1c1917;
+  --p-krem: #ffffff;
+  --p-krem-2: #e2e7ec;
+
+  --side: #1c2740;
+  --side-text: #d3dae8;
+  --side-strong: #ffffff;
+  --side-muted: #98a3bc;
+  --side-accent: #8fd0b4;
+  --side-surface: rgba(255, 255, 255, 0.08);
+  --side-border: rgba(255, 255, 255, 0.14);
+
+  background: var(--desa-bg);
+  color: #1c1917;
+  font-family: var(--font-geist), var(--font-inter), system-ui, sans-serif;
+  font-size: 15.5px;
+}
+.panel .font-mono-geist {
+  font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
 }

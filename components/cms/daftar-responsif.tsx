@@ -42,8 +42,8 @@ export function DaftarResponsif<T>({
         {baris.map((b) => {
           const a = aksi?.(b);
           return (
-            <li key={kunci(b)} className="rounded-2xl border border-line bg-surface p-4">
-              <div className="font-semibold text-hijau">{utama.sel(b)}</div>
+            <li key={kunci(b)} className="rounded-[14px] border border-line-strong bg-surface p-4">
+              <div className="font-medium text-hijau-tua">{utama.sel(b)}</div>
               <dl className="mt-2.5 flex flex-col gap-1.5 text-sm">
                 {lain.map((k) => (
                   <div key={k.judul} className="flex items-baseline justify-between gap-4">
@@ -59,12 +59,12 @@ export function DaftarResponsif<T>({
       </ul>
 
       {/* Layar lebar: tabel */}
-      <div className="hidden overflow-x-auto rounded-2xl border border-line bg-surface md:block">
-        <table aria-label={label} className="w-full text-left text-sm">
-          <thead className="bg-krem-2 text-xs uppercase tracking-wider text-muted-fg">
+      <div className="hidden overflow-x-auto rounded-[14px] border border-line-strong bg-surface md:block">
+        <table aria-label={label} className="w-full text-left text-[15px]">
+          <thead className="bg-krem-2 text-[13px] font-medium text-muted-fg">
             <tr>
               {kolom.map((k) => (
-                <th key={k.judul} scope="col" className={cn("px-4 py-3", k.kanan && "text-right")}>
+                <th key={k.judul} scope="col" className={cn("h-12 px-4", k.kanan && "text-right")}>
                   {k.judul}
                 </th>
               ))}
@@ -77,9 +77,9 @@ export function DaftarResponsif<T>({
           </thead>
           <tbody className="divide-y divide-line align-top">
             {baris.map((b) => (
-              <tr key={kunci(b)} className="hover:bg-krem-2/50">
+              <tr key={kunci(b)} className="transition-colors hover:bg-[rgba(28,25,23,.035)]">
                 {kolom.map((k) => (
-                  <td key={k.judul} className={cn("px-4 py-3", k.kanan && "text-right")}>
+                  <td key={k.judul} className={cn("px-4 py-3.5", k.kanan && "text-right")}>
                     {k.sel(b)}
                   </td>
                 ))}

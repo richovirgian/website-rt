@@ -9,13 +9,13 @@ export function JudulHalaman({
   aksi?: React.ReactNode;
 }) {
   return (
-    <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
+    <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-hijau sm:text-3xl">
+        <h1 className="text-[28px] font-semibold tracking-[-0.02em] text-hijau-tua sm:text-[34px]">
           {judul}
         </h1>
         {keterangan && (
-          <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-muted-fg">
+          <p className="mt-2 max-w-2xl text-[15px] leading-relaxed text-muted-fg">
             {keterangan}
           </p>
         )}

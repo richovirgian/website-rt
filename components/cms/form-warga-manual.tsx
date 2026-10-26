@@ -19,7 +19,11 @@ import { hariIni } from "@/lib/uang";
 import { useAksi } from "@/components/cms/use-aksi";
 import { Bidang } from "@/components/cms/bidang";
 import { PesanAksi } from "@/components/cms/pesan-aksi";
-import { KELAS_ISIAN, TOMBOL_UTAMA } from "@/components/cms/gaya";
+import {
+  KELAS_ISIAN,
+  TOMBOL_SEKUNDER,
+  TOMBOL_UTAMA,
+} from "@/components/cms/gaya";
 
 export type PilihanRumah = {
   id: string;
@@ -177,23 +181,46 @@ export function FormWargaManual({ rumah }: { rumah: PilihanRumah[] }) {
             </div>
           ) : (
             <div>
-              <div className="relative">
-                <Search
-                  className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-fg"
-                  aria-hidden="true"
-                />
-                <input
-                  id="wm-cari"
-                  type="search"
-                  value={cari}
-                  onChange={(e) => setCari(e.target.value)}
-                  onFocus={() => setFokus(true)}
-                  onBlur={() => setTimeout(() => setFokus(false), 150)}
-                  placeholder="Cari rumah, contoh: G-12"
-                  autoComplete="off"
-                  className={`${KELAS_ISIAN} pl-10`}
-                  aria-describedby="wm-cari-info"
-                />
+              <div className="flex gap-2">
+                <div className="relative min-w-0 flex-1">
+                  <Search
+                    className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-fg"
+                    aria-hidden="true"
+                  />
+                  <input
+                    id="wm-cari"
+                    type="search"
+                    value={cari}
+                    onChange={(e) => setCari(e.target.value)}
+                    onFocus={() => setFokus(true)}
+                    onBlur={() => setTimeout(() => setFokus(false), 150)}
+                    onKeyDown={(e) => {
+                      if (e.key !== "Enter") return;
+                      // Enter di kolom cari tidak boleh mengirim formulir.
+                      e.preventDefault();
+                      if (tersaring.length === 1) {
+                        pilihRumah(tersaring[0]!.id);
+                        setFokus(false);
+                      } else setFokus(true);
+                    }}
+                    placeholder="Cari rumah, contoh: G-12"
+                    autoComplete="off"
+                    className={`${KELAS_ISIAN} pl-10`}
+                    aria-describedby="wm-cari-info"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (tersaring.length === 1 && cari.trim() !== "") {
+                      pilihRumah(tersaring[0]!.id);
+                      setFokus(false);
+                    } else setFokus(true);
+                  }}
+                  className={TOMBOL_SEKUNDER}
+                >
+                  Cari
+                </button>
               </div>
               {(fokus || cari !== "") && (
                 <ul

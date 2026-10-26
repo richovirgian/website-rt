@@ -65,10 +65,10 @@ export function BilahBawah({
                   aria-current={aktif ? "page" : undefined}
                   className={cn(
                     "flex min-h-14 flex-col items-center justify-center gap-0.5 px-1 text-[11px] font-medium",
-                    aktif ? "text-hijau" : "text-muted-fg",
+                    aktif ? "font-semibold text-[var(--side)]" : "text-muted-fg",
                   )}
                 >
-                  <span className={cn("grid h-7 w-12 place-items-center rounded-full transition-colors", aktif && "bg-hijau/12")}>
+                  <span className={cn("grid h-7 w-12 place-items-center rounded-full transition-colors", aktif && "bg-[var(--side)]/10")}>
                     <Ikon className="size-5" aria-hidden="true" />
                   </span>
                   <span className="max-w-full truncate">{m.label}</span>
@@ -83,10 +83,10 @@ export function BilahBawah({
               aria-haspopup="dialog"
               className={cn(
                 "flex min-h-14 w-full flex-col items-center justify-center gap-0.5 px-1 text-[11px] font-medium",
-                sisaAktif ? "text-hijau" : "text-muted-fg",
+                sisaAktif ? "font-semibold text-[var(--side)]" : "text-muted-fg",
               )}
             >
-              <span className={cn("grid h-7 w-12 place-items-center rounded-full", sisaAktif && "bg-hijau/12")}>
+              <span className={cn("grid h-7 w-12 place-items-center rounded-full", sisaAktif && "bg-[var(--side)]/10")}>
                 <Ellipsis className="size-5" aria-hidden="true" />
               </span>
               Lainnya
