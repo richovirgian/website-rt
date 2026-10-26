@@ -6,8 +6,6 @@ Next.js 16 (App Router) full-stack, Prisma 7, PostgreSQL, better-auth. Status pe
 
 ## Menjalankan
 
-```bash
-cp .env.example .env.local   # isi DATABASE_URL dan BETTER_AUTH_SECRET
 npm install
 npx prisma migrate dev       # buat tabel
 npm run rt:akun              # buat akun admin pertama
