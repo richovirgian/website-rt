@@ -61,8 +61,10 @@ CONTENT-MODEL.md
 DESIGN.md
 
 # Catatan kerja internal: spec, rencana implementasi, postmortem.
-# Berguna di mesin sendiri, tidak untuk dibagikan lewat GitLab.
-/docs/
+# Secara default tetap lokal; dua dokumen rancangan produk dibagikan untuk review tim.
+/docs/*
+!/docs/PRD-Ekosistem-Warga.md
+!/docs/ERD-Ekosistem-Warga.md
 
 # ==========================================
 # IDEs & Code Editors
